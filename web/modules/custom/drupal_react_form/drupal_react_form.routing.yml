@@ -1,3 +1,11 @@
+drupal_react_form.demo_page:
+  path: '/drupal-react-form/demo'
+  defaults:
+    _controller: '\Drupal\drupal_react_form\Controller\ReactFormController::demoPage'
+    _title: 'Demo — React Form Components'
+  requirements:
+    _permission: 'access content'
+
 drupal_react_form.get_definition:
   path: '/api/react-form/{form_id}'
   defaults:

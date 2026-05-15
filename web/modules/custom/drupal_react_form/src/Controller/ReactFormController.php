@@ -22,6 +22,23 @@ class ReactFormController extends ControllerBase {
     );
   }
 
+  public function demoPage(): array {
+    return [
+      '#type'   => 'inline_template',
+      '#template' => '
+        <div style="max-width:720px;margin:2rem auto;padding:0 1rem;">
+          <h1>Demo — Drupal React Form</h1>
+          <p>Los campos de abajo están renderizados por componentes React. La definición viene del endpoint
+             <code>/api/react-form/Drupal\drupal_react_form\Form\DemoForm?_format=json</code>.</p>
+          <div data-react-form
+               data-form-id="Drupal\drupal_react_form\Form\DemoForm"></div>
+        </div>',
+      '#attached' => [
+        'library' => ['drupal_react_form/react-form-app'],
+      ],
+    ];
+  }
+
   public function getDefinition(string $form_id, Request $request): JsonResponse {
     if (!preg_match('/^[a-zA-Z_\\\\]+$/', $form_id)) {
       return new JsonResponse(['success' => FALSE, 'error' => 'Invalid form ID'], 400);

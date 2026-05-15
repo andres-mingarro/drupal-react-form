@@ -1,0 +1,23 @@
+@use '../base';
+
+.drf-field--select {
+  &__wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  &__input {
+    appearance: none;
+    padding-right: 2.5rem;
+    cursor: pointer;
+  }
+
+  &__arrow {
+    position: absolute;
+    right: 0.75rem;
+    pointer-events: none;
+    color: var(--drf-help-color, #6b7280);
+    font-size: 0.75rem;
+  }
+}

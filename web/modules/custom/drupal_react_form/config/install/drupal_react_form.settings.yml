@@ -1,0 +1,3 @@
+allowed_forms: []
+cors_origins:
+  - '*'

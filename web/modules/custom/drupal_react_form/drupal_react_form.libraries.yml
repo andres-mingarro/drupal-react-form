@@ -1,0 +1,9 @@
+react-form-app:
+  version: 1.x
+  js:
+    dist/react-form.js: { minified: false, preprocess: false }
+  css:
+    theme:
+      dist/react-form.css: {}
+  dependencies:
+    - core/drupalSettings

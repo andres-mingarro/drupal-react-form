@@ -1,0 +1,4 @@
+services:
+  drupal_react_form.form_serializer:
+    class: Drupal\drupal_react_form\Service\FormSerializer
+    arguments: ['@form_builder', '@current_user', '@logger.channel.default']

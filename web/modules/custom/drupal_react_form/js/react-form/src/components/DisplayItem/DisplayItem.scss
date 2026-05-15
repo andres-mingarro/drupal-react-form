@@ -1,0 +1,13 @@
+@use '../base';
+
+.drf-field--item {
+  margin: 0;
+  margin-bottom: 1.25rem;
+
+  &__value {
+    margin: 0;
+    padding: 0.25rem 0;
+    color: var(--drf-text, #111827);
+    font-size: var(--drf-font-size, 1rem);
+  }
+}

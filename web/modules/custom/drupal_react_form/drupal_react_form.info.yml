@@ -1,0 +1,9 @@
+name: 'Drupal React Form'
+type: module
+description: 'Exposes Drupal Form API definitions as JSON REST endpoints for React rendering.'
+package: Custom
+core_version_requirement: ^11
+dependencies:
+  - drupal:rest
+  - drupal:serialization
+  - drupal:user

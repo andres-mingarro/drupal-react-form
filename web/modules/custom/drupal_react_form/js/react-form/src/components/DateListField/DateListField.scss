@@ -1,0 +1,33 @@
+@use '../base';
+
+.drf-field--datelist {
+  border: none;
+  padding: 0;
+  margin: 0 0 1.25rem;
+
+  &__selects {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.25rem;
+  }
+
+  &__select {
+    padding: 0.5rem 0.5rem;
+    border: 1px solid var(--drf-border, #d1d5db);
+    border-radius: var(--drf-radius, 0.375rem);
+    font-size: var(--drf-font-size, 1rem);
+    background: var(--drf-bg, #fff);
+    cursor: pointer;
+    appearance: none;
+
+    &--year { min-width: 5rem; }
+    &:focus { outline: none; border-color: var(--drf-primary, #3b82f6); box-shadow: 0 0 0 3px var(--drf-shadow-focus); }
+  }
+
+  &__sep {
+    font-weight: bold;
+    color: var(--drf-help-color, #6b7280);
+  }
+}

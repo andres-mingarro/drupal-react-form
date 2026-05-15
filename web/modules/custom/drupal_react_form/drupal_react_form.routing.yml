@@ -1,0 +1,19 @@
+drupal_react_form.get_definition:
+  path: '/api/react-form/{form_id}'
+  defaults:
+    _controller: '\Drupal\drupal_react_form\Controller\ReactFormController::getDefinition'
+    _title: 'React Form Definition'
+  requirements:
+    _permission: 'access content'
+    _format: 'json'
+  methods: [GET, OPTIONS]
+
+drupal_react_form.submit_form:
+  path: '/api/react-form/{form_id}/submit'
+  defaults:
+    _controller: '\Drupal\drupal_react_form\Controller\ReactFormController::submitForm'
+    _title: 'React Form Submit'
+  requirements:
+    _permission: 'access content'
+    _format: 'json'
+  methods: [POST, OPTIONS]

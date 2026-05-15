@@ -1,0 +1,9 @@
+@use '../base';
+
+.drf-field--textarea {
+  &__input {
+    resize: vertical;
+    min-height: 6rem;
+    line-height: 1.6;
+  }
+}

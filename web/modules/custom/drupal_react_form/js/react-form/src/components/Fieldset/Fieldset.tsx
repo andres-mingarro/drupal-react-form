@@ -4,7 +4,7 @@ import { ChildRenderer } from '../ChildRenderer';
 import type { BaseFieldProps, FormValues } from '../../types/drupal-form';
 import './Fieldset.scss';
 
-export function Fieldset({ name, element, formValues, onChange, error }: BaseFieldProps) {
+export function Fieldset({ element, formValues, onChange, error }: BaseFieldProps) {
   const states = evaluateStates(element.states, formValues);
   if (element.access === false || !states.visible) return null;
 

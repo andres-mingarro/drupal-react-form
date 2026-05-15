@@ -2,7 +2,7 @@ import { evaluateStates } from '../../engine/statesEngine';
 import type { BaseFieldProps } from '../../types/drupal-form';
 import './DisplayItem.scss';
 
-export function DisplayItem({ name, element, formValues }: BaseFieldProps) {
+export function DisplayItem({ element, formValues }: BaseFieldProps) {
   const states = evaluateStates(element.states, formValues);
   if (element.access === false || !states.visible) return null;
 

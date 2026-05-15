@@ -4,7 +4,7 @@ import { ChildRenderer } from '../ChildRenderer';
 import type { BaseFieldProps, FormValues } from '../../types/drupal-form';
 import './Container.scss';
 
-export function Container({ name, element, formValues, onChange }: BaseFieldProps) {
+export function Container({ element, formValues, onChange }: BaseFieldProps) {
   const states = evaluateStates(element.states, formValues);
   if (element.access === false || !states.visible) return null;
 

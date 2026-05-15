@@ -1,4 +1,4 @@
-import { Suspense, useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { evaluateStates } from './engine/statesEngine';
 import { ELEMENT_TYPE_MAP } from './engine/elementTypeMap';
 import type {
@@ -65,9 +65,7 @@ function DrupalElementRenderer({ name, element, formValues, onChange, error }: E
       {element.prefix && (
         <span className="drf-element__prefix" dangerouslySetInnerHTML={{ __html: element.prefix }} />
       )}
-      <Suspense fallback={<div className="drf-loading" aria-busy="true" />}>
-        {Component ? <Component {...fieldProps} /> : <FallbackField {...fieldProps} />}
-      </Suspense>
+      {Component ? <Component {...fieldProps} /> : <FallbackField {...fieldProps} />}
       {element.suffix && (
         <span className="drf-element__suffix" dangerouslySetInnerHTML={{ __html: element.suffix }} />
       )}

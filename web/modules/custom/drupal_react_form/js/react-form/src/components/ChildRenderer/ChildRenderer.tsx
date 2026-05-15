@@ -1,4 +1,4 @@
-import { Suspense } from 'react';
+
 import { ELEMENT_TYPE_MAP } from '../../engine/elementTypeMap';
 import { evaluateStates } from '../../engine/statesEngine';
 import type { DrupalElement, DrupalFormDefinition, FormValues } from '../../types/drupal-form';
@@ -36,9 +36,9 @@ export function ChildRenderer({ children, formValues, onChange, errors = {} }: C
         };
 
         return (
-          <Suspense key={childName} fallback={<div className="drf-loading" />}>
+          <div key={childName}>
             {Component ? <Component {...fieldProps} /> : <FallbackChild element={childElement} />}
-          </Suspense>
+          </div>
         );
       })}
     </>

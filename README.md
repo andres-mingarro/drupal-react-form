@@ -1,63 +1,54 @@
-# Drupal React Form
+# Drupal React Form — Documentación del componente
 
-Módulo Drupal 11 que expone formularios como JSON y los renderiza con React, dando control total sobre el markup desde el tema.
+Sistema que expone formularios como JSON y los renderiza con React, permitiendo control total sobre el markup desde el tema.
 
 ---
 
 ## Índice
 
-1. [Cómo funciona](#cómo-funciona)
-2. [Flujo de datos detallado](#flujo-de-datos-detallado)
-3. [Tipos de formularios](#tipos-de-formularios)
-4. [Modo 1 — Genérico automático](#modo-1--genérico-automático)
-5. [Modo 2 — Componente dedicado con markup custom](#modo-2--componente-dedicado-con-markup-custom)
-6. [Formularios dinámicos desde el admin](#formularios-dinámicos-desde-el-admin)
-7. [SDC Component en el tema](#sdc-component-en-el-tema)
-8. [Componentes de campo disponibles](#componentes-de-campo-disponibles)
-9. [Diseño y CSS por componente](#diseño-y-css-por-componente)
-10. [API endpoints](#api-endpoints)
-11. [Build del bundle](#build-del-bundle)
-12. [Comandos útiles](#comandos-útiles)
+1. [Flujo de datos](#flujo-de-datos)
+2. [Montar el componente en cualquier template](#montar-el-componente-en-cualquier-template)
+3. [SDC: llevar el form a un componente del tema](#sdc-llevar-el-form-a-un-componente-del-tema)
+4. [Crear un componente React con markup custom](#crear-un-componente-react-con-markup-custom)
+5. [Registrar el componente en el registry](#registrar-el-componente-en-el-registry)
+6. [Todos los field components](#todos-los-field-components)
+7. [Layout: filas y columnas](#layout-filas-y-columnas)
+8. [Theming: CSS por componente](#theming-css-por-componente)
+9. [Definición inline — evitar el fetch](#definición-inline--evitar-el-fetch)
+10. [API de referencia](#api-de-referencia)
+11. [Build](#build)
 
 ---
 
-## Cómo funciona
+## Flujo de datos
 
 ```
-Drupal Form API / Admin Builder
-         │
-         ▼
-   JSON via API
-         │
-         ▼
-  React (bundle IIFE)
-  index.tsx detecta data-form-id
-         │
-         ├── user:UID        → UserEditForm (componente dedicado)
-         ├── dynamic:foo     → componente del DYNAMIC_REGISTRY, o DrupalForm genérico
-         └── Drupal.M.F.Bar  → DrupalForm genérico
+Base de datos / Clase PHP
+        │
+        │  serializa a JSON
+        ▼
+GET /api/react-form/dynamic/[nombre-form]
+        │
+        │  { elements: { [campo]: { type, title, options... } } }
+        ▼
+index.tsx detecta [data-react-form]
+        │
+        ├── user:UID         →  UserEditForm
+        ├── dynamic:[id]     →  componente del registry, o DrupalForm genérico
+        └── Drupal.M.F.Bar   →  DrupalForm genérico
+        │
+        ▼
+Componente React recibe `definition` (el contrato)
+  → renderiza cada campo con su field component
+  → gestiona estado local (values, errors, submitting)
+  → POST JSON al submit
+        │
+        ▼
+POST /api/react-form/dynamic/[nombre-form]/submit
+  → guarda en drupal_react_form_submissions
 ```
 
-El bundle `dist/react-form.js` se carga una sola vez. Escanea todos los `[data-react-form]` de la página y monta el componente correspondiente en cada uno.
-
----
-
-## Flujo de datos detallado
-
-Este es el viaje completo de los datos, desde la base de datos hasta el HTML en el browser.
-
-### 1. Drupal serializa la definición
-
-```
-Tabla drupal_react_forms (o clase PHP Form API)
-         │
-         │  DynamicFormStorage::load()  →  array PHP
-         │  DynamicFormApiController::getDefinition()
-         ▼
-GET /api/react-form/dynamic/[nombre-form-custom]?_format=json
-```
-
-La respuesta JSON tiene esta forma:
+### El contrato JSON
 
 ```json
 {
@@ -84,174 +75,186 @@ La respuesta JSON tiene esta forma:
 }
 ```
 
-### 2. React recibe el contrato y lo hidrata
-
-```tsx
-// useEffect en [NombreFormCustom].tsx
-fetch('/api/react-form/dynamic/[nombre-form-custom]?_format=json')
-  .then(r => r.json())
-  .then(data => {
-    setDefinition(data.elements);   // el contrato completo
-    setValues(defaultValues);       // valores iniciales (último guardado o vacíos)
-  });
-```
-
-`definition` = el objeto `elements` completo. Cada campo component recibe **solo su slice**:
+Cada field component recibe solo su slice del contrato. **No sabe de dónde viene — solo consume la definición.**
 
 ```tsx
 <SelectField
   name="[campo_1]"
-  element={definition['[campo_1]']}  // { type, title, options, required, ... }
-  formValues={values}                // estado actual del form completo
+  element={definition['[campo_1]']}  // { type, title, options, required... }
+  formValues={values}
   onChange={(v) => handleChange('[campo_1]', v)}
   error={errors['[campo_1]']}
 />
 ```
 
-`SelectField` lee `element.options` para el `<select>`, `element.title` para el label, `element.required` para el asterisco. **El componente nunca sabe de dónde vino el dato — solo consume el contrato.**
-
-### 3. El usuario interactúa
-
-Cada vez que el usuario toca un campo, `onChange` actualiza el estado local de React:
-
-```tsx
-const handleChange = (name: string, value: unknown) => {
-  setValues(prev => ({ ...prev, [name]: value }));
-};
-
-// Después de completar el form, values queda:
-// { '[campo_1]': 'opcion_a', '[campo_2]': 'Juan' }
-```
-
-### 4. Submit: React → Drupal
-
-```tsx
-// 1. Obtener CSRF token
-const csrf = await fetch('/session/token').then(r => r.text());
-
-// 2. Postear los valores como JSON plano
-POST /api/react-form/dynamic/[nombre-form-custom]/submit?_format=json
-Headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf }
-Body:     { "[campo_1]": "opcion_a", "[campo_2]": "Juan" }
-```
-
-```php
-// DynamicFormApiController::submitForm() guarda en la base:
-INSERT INTO drupal_react_form_submissions
-  (form_id,               data,                              uid,  created)
-  ('[nombre-form-custom]', '{"[campo_1]":"opcion_a",...}',   1,    1747...)
-```
-
-### 5. El panel "Último guardado" lee desde la base
-
-```
-GET /api/react-form/dynamic/[nombre-form-custom]/submissions?_format=json
-         │
-         │  SELECT * FROM drupal_react_form_submissions
-         │  WHERE form_id = '[nombre-form-custom]'
-         │  ORDER BY created DESC LIMIT 20
-         ▼
-[{ id, data: { campo_1: "...", campo_2: "..." }, uid, created }]
-         │
-         ▼
-React muestra el último registro en el panel lateral
-```
-
-### Resumen del contrato
-
-```
-Drupal                          React
-──────────────────────────────────────────────
-Provee: qué campos hay          Consume: el contrato
-        qué tipo son                     lo transforma en HTML
-        qué opciones tienen              gestiona el estado local
-        qué reglas tienen                valida en el browser
-        valores por defecto              postea JSON en submit
-──────────────────────────────────────────────
-```
-
 ---
 
-## Tipos de formularios
+## Montar el componente en cualquier template
 
-| Tipo | ID en `data-form-id` | Backend |
-|------|---------------------|---------|
-| Formulario Drupal Form API | `Drupal.mi_modulo.Form.MiForm` | Clase PHP |
-| Edición de usuario | `user:42` | `UserReactFormController` |
-| Formulario dinámico (admin) | `dynamic:mi_form` | Tabla `drupal_react_forms` |
-
----
-
-## Modo 1 — Genérico automático
-
-El modo más simple. El `DrupalForm` genérico fetchea la definición y renderiza todos los campos automáticamente.
-
-### En Twig
+### Opción A — Twig directo
 
 ```twig
 <div
   data-react-form
-  data-form-id="dynamic:nombre_del_proyecto"
+  data-form-id="dynamic:[nombre-form]"
 ></div>
 {{ attach_library('drupal_react_form/react-form-app') }}
 ```
 
-### Desde un controller PHP
+### Opción B — Desde un controller PHP
 
 ```php
 return [
   '#type'     => 'inline_template',
-  '#template' => '<div data-react-form data-form-id="dynamic:mi_form"></div>',
+  '#template' => '<div data-react-form data-form-id="dynamic:[nombre-form]"></div>',
   '#attached' => ['library' => ['drupal_react_form/react-form-app']],
 ];
 ```
 
-### Como SDC del tema
+El bundle escanea todos los `[data-react-form]` de la página y monta el componente correspondiente en cada uno.
+
+---
+
+## SDC: llevar el form a un componente del tema
+
+Cada formulario puede vivir como un componente SDC en `components/features/` del tema. Esto permite incluirlo en cualquier template con una línea y pasarle datos de Drupal como props.
+
+### Estructura mínima
+
+```
+web/themes/custom/[tema]/components/features/[nombre-form]/
+  [nombre-form].component.yml
+  [nombre-form].twig
+  [nombre-form].css
+```
+
+### `[nombre-form].component.yml`
+
+```yaml
+$schema: https://git.drupalcode.org/project/drupal/-/raw/HEAD/core/assets/schemas/v1/metadata.schema.json
+
+name: [Nombre Form]
+description: Descripción del formulario.
+
+libraryOverrides:
+  dependencies:
+    - drupal_react_form/react-form-app
+
+props:
+  type: object
+  additionalProperties: false
+  properties:
+    title:
+      type: string
+      title: Encabezado opcional
+```
+
+### `[nombre-form].twig`
 
 ```twig
-{# En cualquier template .twig #}
-{% include 'react_form_test:nombre-del-proyecto-form' with {
+{{ attach_library('drupal_react_form/react-form-app') }}
+
+{% set wrapper_attributes = (attributes is defined ? attributes : create_attribute()).addClass([
+  '[nombre-form]',
+]) %}
+
+<section{{ wrapper_attributes }}>
+  {% if title is defined and title %}
+    <h2 class="[nombre-form]__title">{{ title }}</h2>
+  {% endif %}
+
+  <div
+    data-react-form
+    data-form-id="dynamic:[nombre-form]"
+  ></div>
+</section>
+```
+
+### `[nombre-form].css`
+
+```css
+.[nombre-form] {
+  max-width: 720px;
+}
+
+.[nombre-form]__title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  margin: 0 0 var(--lg);
+}
+```
+
+### Incluirlo en cualquier template del tema
+
+```twig
+{# page.html.twig, node.html.twig, etc. #}
+{% include 'react_form_test:[nombre-form]' with {
   title: 'Mi formulario',
 } %}
 ```
 
-**El orden visual de los campos lo define el `weight` de cada campo en el admin.**
+### Incluirlo con datos de Drupal como props
+
+Si necesitás pasar datos del usuario u otra entidad, usá un preprocess hook en el `.theme`:
+
+```php
+// [tema].theme
+function [tema]_preprocess_page(&$variables): void {
+  $uid = (int) \Drupal::currentUser()->id();
+  if ($uid) {
+    $user = \Drupal\user\Entity\User::load($uid);
+    $variables['user_data'] = [
+      'uid'  => $uid,
+      'name' => $user->getAccountName(),
+      'mail' => $user->getEmail(),
+    ];
+  }
+}
+```
+
+```twig
+{# En el template, pasás esos datos al componente #}
+{% if user_data is defined %}
+  {% include 'react_form_test:[nombre-form]' with {
+    uid:   user_data.uid,
+    name:  user_data.name,
+    title: 'Editar perfil',
+  } %}
+{% endif %}
+```
 
 ---
 
-## Modo 2 — Componente dedicado con markup custom
+## Crear un componente React con markup custom
 
-Cuando necesitás control total sobre el layout: columnas, secciones, agrupaciones, clases propias.
+Cuando necesitás control total sobre el layout (columnas, secciones, agrupaciones), creás un componente dedicado.
 
-### Paso 1: Crear el formulario en el admin (si es dinámico)
-
-`/admin/drupal-react-form/forms/add`
-
-### Paso 2: Crear el componente React
+### Estructura de archivos
 
 ```
-js/react-form/src/features/MiForm/
-  MiForm.tsx       ← aquí va el markup
-  MiForm.scss      ← diseño exclusivo de este form
+js/react-form/src/features/[NombreForm]/
+  [NombreForm].tsx    ← markup y lógica
+  [NombreForm].scss   ← diseño exclusivo
   index.ts
 ```
 
-```tsx
-// MiForm.tsx
-import { useCallback, useEffect, useState } from 'react';
-import TextField      from '../../components/TextField';
-import EmailField     from '../../components/EmailField';
-import SelectField    from '../../components/SelectField';
-import SubmitButton   from '../../components/SubmitButton';
-import type { DrupalElement, DrupalFormDefinition, FormValues } from '../../types/drupal-form';
-import './MiForm.scss';
+### `[NombreForm].tsx` — estructura base
 
-const FORM_ID = 'mi_form';  // mismo ID que en el admin
+```tsx
+import { useCallback, useEffect, useState } from 'react';
+import TextField   from '../../components/TextField';
+import EmailField  from '../../components/EmailField';
+import SelectField from '../../components/SelectField';
+import SubmitButton from '../../components/SubmitButton';
+import type { DrupalElement, DrupalFormDefinition, FormValues } from '../../types/drupal-form';
+import './[NombreForm].scss';
+
+const FORM_ID = '[nombre-form]';
 const SUBMIT_EL: DrupalElement = { key: 'submit', type: 'submit', value: 'Enviar' };
 
 interface Props { baseUrl?: string; }
 
-export function MiForm({ baseUrl = '' }: Props) {
+export function [NombreForm]({ baseUrl = '' }: Props) {
   const [definition, setDefinition] = useState<DrupalFormDefinition | null>(null);
   const [values, setValues]         = useState<FormValues>({});
   const [errors, setErrors]         = useState<Record<string, string>>({});
@@ -259,7 +262,6 @@ export function MiForm({ baseUrl = '' }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted]   = useState(false);
 
-  // Cargar definición del form
   useEffect(() => {
     fetch(`${baseUrl}/api/react-form/dynamic/${FORM_ID}?_format=json`)
       .then(r => r.json())
@@ -276,50 +278,54 @@ export function MiForm({ baseUrl = '' }: Props) {
 
   const handleChange = useCallback((name: string, value: unknown) => {
     setValues(prev => ({ ...prev, [name]: value }));
+    setErrors(prev => { const next = { ...prev }; delete next[name]; return next; });
   }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSubmitting(true);
     const csrf = await fetch(`${baseUrl}/session/token`).then(r => r.text()).catch(() => '');
-    const res  = await fetch(`${baseUrl}/api/react-form/dynamic/${FORM_ID}/submit?_format=json`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
-      body: JSON.stringify(values),
-    });
-    const data = await res.json();
-    if (data.success) setSubmitted(true);
-    if (data.errors)  setErrors(data.errors);
-    setSubmitting(false);
+    try {
+      const res  = await fetch(`${baseUrl}/api/react-form/dynamic/${FORM_ID}/submit?_format=json`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
+        body: JSON.stringify(values),
+      });
+      const data = await res.json();
+      if (data.success) setSubmitted(true);
+      if (data.errors)  setErrors(data.errors);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  if (loading || !definition) return <div>Cargando...</div>;
+  if (loading || !definition) return <div className="nf nf--loading">Cargando...</div>;
 
   const fv    = { ...values, __submitting: submitting };
   const field = (name: string) => definition[name] ?? null;
   const props = (name: string) => ({
     name,
-    element: definition[name],
+    element:    definition[name],
     formValues: fv,
-    onChange: (v: unknown) => handleChange(name, v),
-    error: errors[name],
+    onChange:   (v: unknown) => handleChange(name, v),
+    error:      errors[name],
   });
 
   return (
-    <form className="mf" onSubmit={handleSubmit} noValidate>
+    <form className={`nf${submitting ? ' nf--submitting' : ''}`} onSubmit={handleSubmit} noValidate>
 
-      {submitted && <div className="mf__success">Enviado correctamente.</div>}
+      {submitted && <div className="nf__success">Enviado correctamente.</div>}
 
       {/* ── Acá controlás el markup completamente ── */}
 
-      <div className="mf__row">
-        {field('nombre') && <TextField  {...props('nombre')} />}
-        {field('email')  && <EmailField {...props('email')} />}
+      <div className="nf__row">
+        {field('[campo_1]') && <TextField  {...props('[campo_1]')} />}
+        {field('[campo_2]') && <EmailField {...props('[campo_2]')} />}
       </div>
 
-      {field('categoria') && <SelectField {...props('categoria')} />}
+      {field('[campo_3]') && <SelectField {...props('[campo_3]')} />}
 
-      <div className="mf__actions">
+      <div className="nf__actions">
         <SubmitButton name="submit" element={SUBMIT_EL} formValues={fv} onChange={() => {}} />
       </div>
 
@@ -328,174 +334,49 @@ export function MiForm({ baseUrl = '' }: Props) {
 }
 ```
 
+### `index.ts`
+
 ```ts
-// index.ts
-export { MiForm } from './MiForm';
+export { [NombreForm] } from './[NombreForm]';
 ```
 
-### Paso 3: Registrar en el registry de `index.tsx`
+---
+
+## Registrar el componente en el registry
+
+Abrís `js/react-form/src/index.tsx` y agregás el import y la entrada en `DYNAMIC_REGISTRY`:
 
 ```tsx
-// js/react-form/src/index.tsx
-import { MiForm } from './features/MiForm';
+import { [NombreForm] } from './features/[NombreForm]';
 
 const DYNAMIC_REGISTRY: Record<string, ComponentType<{ baseUrl?: string }>> = {
-  nombre_del_proyecto: NombreDelProyectoForm,
-  mi_form:             MiForm,             // ← agregar acá
+  [nombre_form]: [NombreForm],   // ← agregar acá
 };
 ```
 
-Desde este momento `data-form-id="dynamic:mi_form"` monta `MiForm` en lugar del genérico.
+A partir de este momento, `data-form-id="dynamic:[nombre-form]"` monta `[NombreForm]` en lugar del genérico.
 
-### Paso 4: Build
-
-```bash
-lando pnpm --dir web/modules/custom/drupal_react_form/js/react-form build
-lando drush cr
-```
+> Si el ID **no está** en el registry, el sistema usa `DrupalForm` genérico automáticamente — no hace falta registrar todos los forms, solo los que necesitan markup custom.
 
 ---
 
-## Formularios dinámicos desde el admin
+## Todos los field components
 
-### Crear un form
-
-1. Ir a **Estructura → Formularios React** (`/admin/drupal-react-form/forms`)
-2. Click en **Agregar formulario**
-3. Completar:
-   - **Label**: nombre visible
-   - **ID**: machine name (`[a-z0-9_]+`), no se puede cambiar después
-4. Agregar campos con **+ Agregar campo**
-
-### Tipos de campo disponibles
-
-| Grupo | Tipos |
-|-------|-------|
-| Texto | `textfield`, `email`, `password`, `password_confirm`, `textarea`, `number`, `tel`, `url`, `search` |
-| Selección | `select`, `checkbox`, `checkboxes`, `radio`, `radios` |
-| Fecha | `date`, `datetime` |
-| Archivo | `file`, `managed_file` |
-| Layout | `fieldset`, `details`, `container` |
-| Otros | `hidden`, `submit` |
-
-### Opciones para select / checkboxes / radios
-
-El campo **Opciones** aparece automáticamente cuando el tipo lo requiere. Formato: una opción por línea.
-
-```
-# Solo etiqueta (valor = etiqueta)
-Opción uno
-Opción dos
-
-# Con valor separado por pipe
-valor_1|Opción uno
-valor_2|Opción dos
-```
-
-### Ver los datos guardados
-
-Cada submit se guarda en `drupal_react_form_submissions`. Consultarlos:
-
-```bash
-lando drush ev "
-  \$rows = \Drupal::database()
-    ->select('drupal_react_form_submissions','s')
-    ->fields('s')
-    ->condition('form_id','mi_form')
-    ->orderBy('created','DESC')
-    ->execute()->fetchAll();
-  foreach(\$rows as \$r) {
-    echo date('Y-m-d H:i', \$r->created) . ' — ' . \$r->data . PHP_EOL;
-  }
-"
-```
-
-O via API:
-
-```
-GET /api/react-form/dynamic/{form_id}/submissions?_format=json
-```
-
----
-
-## SDC Component en el tema
-
-Cada form puede tener su propio componente SDC en `components/features/`. Estructura mínima:
-
-```
-components/features/mi-form/
-  mi-form.component.yml
-  mi-form.twig
-  mi-form.css
-```
-
-```yaml
-# mi-form.component.yml
-$schema: https://git.drupalcode.org/project/drupal/-/raw/HEAD/core/assets/schemas/v1/metadata.schema.json
-name: Mi Form
-libraryOverrides:
-  dependencies:
-    - drupal_react_form/react-form-app
-props:
-  type: object
-  additionalProperties: false
-  properties:
-    title:
-      type: string
-```
-
-```twig
-{# mi-form.twig #}
-{{ attach_library('drupal_react_form/react-form-app') }}
-
-<section class="mi-form">
-  {% if title is defined and title %}
-    <h2 class="mi-form__title">{{ title }}</h2>
-  {% endif %}
-
-  <div data-react-form data-form-id="dynamic:mi_form"></div>
-</section>
-```
-
-Incluirlo desde cualquier template:
-
-```twig
-{% include 'react_form_test:mi-form' with { title: 'Contacto' } %}
-```
-
-### Pasar definición inline (evita el fetch a la API)
-
-Si el PHP puede proveer los datos del form, pasarlos como JSON en `data-form-definition` elimina el round-trip a la API:
-
-```twig
-<div
-  data-react-form
-  data-form-id="dynamic:mi_form"
-  data-form-definition="{{ definicion_json|json_encode }}"
-></div>
-```
-
-React detecta el atributo y lo usa directamente, sin hacer fetch.
-
----
-
-## Componentes de campo disponibles
-
-Todos aceptan la misma interfaz `BaseFieldProps`:
+Todos aceptan `BaseFieldProps`:
 
 ```tsx
 interface BaseFieldProps {
-  name: string;
-  element: DrupalElement;   // definición del campo (tipo, título, opciones, etc.)
-  formValues: FormValues;   // estado completo del form
-  onChange: (value: unknown) => void;
-  onBlur?: () => void;
-  error?: string;
+  name:       string;
+  element:    DrupalElement;   // definición del campo
+  formValues: FormValues;      // estado completo del form
+  onChange:   (value: unknown) => void;
+  onBlur?:    () => void;
+  error?:     string;
 }
 ```
 
-| Componente | Tipo Drupal | Import |
-|-----------|------------|--------|
+| Componente | Tipo | Import |
+|-----------|------|--------|
 | `TextField` | `textfield` | `../../components/TextField` |
 | `EmailField` | `email` | `../../components/EmailField` |
 | `PasswordField` | `password` | `../../components/PasswordField` |
@@ -516,52 +397,69 @@ interface BaseFieldProps {
 | `SubmitButton` | `submit` | `../../components/SubmitButton` |
 | `HiddenField` | `hidden` | `../../components/HiddenField` |
 
-### Patrones de uso en el componente
+### Helpers para usarlos
 
 ```tsx
-// Helper para verificar si el campo existe en la definición
+// Verifica si el campo existe en la definición
 const field = (name: string) => definition[name] ?? null;
 
-// Helper para armar las props estándar
+// Arma las props estándar de cada campo
 const props = (name: string) => ({
   name,
-  element: definition[name],
+  element:    definition[name],
   formValues: { ...values, __submitting: submitting },
-  onChange: (v: unknown) => handleChange(name, v),
-  error: errors[name],
+  onChange:   (v: unknown) => handleChange(name, v),
+  error:      errors[name],
 });
 
-// Renderizado condicional — solo muestra el campo si existe en la definición
-{field('email') && <EmailField {...props('email')} />}
+// Renderizado condicional
+{field('[campo]') && <TextField {...props('[campo]')} />}
 
-// Dos campos en la misma fila
-<div className="mf__row">
-  {field('nombre') && <TextField  {...props('nombre')} />}
-  {field('email')  && <EmailField {...props('email')} />}
-</div>
-
-// Campo de submit personalizado (sin necesitar la definición)
+// Submit sin definición en la API
 const SUBMIT_EL: DrupalElement = { key: 'submit', type: 'submit', value: 'Enviar' };
 <SubmitButton name="submit" element={SUBMIT_EL} formValues={fv} onChange={() => {}} />
 ```
 
 ---
 
-## Diseño y CSS por componente
+## Layout: filas y columnas
 
-Cada componente dedicado tiene su propio SCSS que **override las variables `--drf-*`** en su scope. Esto permite que el mismo `TextField` se vea completamente diferente en cada form.
+El layout lo definís en el TSX con clases propias. Ejemplos:
+
+```tsx
+{/* Dos columnas principales */}
+<div className="nf__grid">
+  <div className="nf__col">
+    {field('nombre') && <TextField  {...props('nombre')} />}
+    {field('email')  && <EmailField {...props('email')} />}
+  </div>
+  <div className="nf__col">
+    {field('foto')    && <ManagedFileField {...props('foto')} />}
+    {field('zona')    && <SelectField      {...props('zona')} />}
+  </div>
+</div>
+
+{/* Dos campos en la misma fila dentro de una columna */}
+<div className="nf__row">
+  {field('nombre') && <TextField  {...props('nombre')} />}
+  {field('apellido') && <TextField {...props('apellido')} />}
+</div>
+
+{/* Campo a ancho completo */}
+{field('descripcion') && <TextareaField {...props('descripcion')} />}
+```
 
 ```scss
-// MiForm.scss
-.mf {
-  // Override de variables para este form
-  --drf-primary:     #7c3aed;  // violeta
-  --drf-border:      #e9d5ff;
-  --drf-bg:          #faf5ff;
-  --drf-label-color: #6d28d9;
-  --drf-text:        #1e1b4b;
+// [NombreForm].scss
+.nf {
+  &__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
 
-  // Layout
+    @media (max-width: 640px) { grid-template-columns: 1fr; }
+  }
+
   &__row {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -575,6 +473,31 @@ Cada componente dedicado tiene su propio SCSS que **override las variables `--dr
     justify-content: flex-end;
     margin-top: 1.5rem;
   }
+}
+```
+
+---
+
+## Theming: CSS por componente
+
+Cada componente tiene su propio SCSS. Lo más importante: **override de variables `--drf-*`** en el scope del form, para que los field components (TextField, SelectField, etc.) se vean diferente en cada form sin tocar su código.
+
+```scss
+// [NombreForm].scss
+.nf {
+  // Override de variables — solo afecta los campos dentro de .nf
+  --drf-primary:      #7c3aed;
+  --drf-border:       #e9d5ff;
+  --drf-bg:           #faf5ff;
+  --drf-label-color:  #6d28d9;
+  --drf-text:         #1e1b4b;
+  --drf-radius:       8px;
+  --drf-shadow-focus: rgba(124, 58, 237, 0.2);
+
+  // Estilos propios del form
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 2rem;
 
   &__success {
     background: #f0fdf4;
@@ -583,111 +506,95 @@ Cada componente dedicado tiene su propio SCSS que **override las variables `--dr
     color: #15803d;
     padding: 0.75rem 1rem;
     margin-bottom: 1rem;
+    font-weight: 500;
   }
 }
 ```
 
 ### Variables `--drf-*` disponibles
 
-| Variable | Por defecto | Descripción |
-|----------|------------|-------------|
-| `--drf-primary` | `#2563eb` | Color de acento, focus, botón |
+| Variable | Default | Qué controla |
+|----------|---------|-------------|
+| `--drf-primary` | `#2563eb` | Focus, botón submit |
 | `--drf-primary-hover` | `#1d4ed8` | Hover del botón |
 | `--drf-border` | `#d9dee8` | Borde de inputs |
 | `--drf-radius` | `6px` | Border radius |
 | `--drf-bg` | `#ffffff` | Fondo de inputs |
-| `--drf-text` | `#172033` | Color de texto en inputs |
+| `--drf-text` | `#172033` | Texto dentro del input |
 | `--drf-label-color` | `#172033` | Color de labels |
-| `--drf-help-color` | `#667085` | Color de texto de ayuda |
-| `--drf-error` | `#dc2626` | Color de errores |
-| `--drf-shadow-focus` | `rgba(59,130,246,.15)` | Sombra en focus |
+| `--drf-help-color` | `#667085` | Texto de descripción |
+| `--drf-error` | `#dc2626` | Mensajes de error |
+| `--drf-shadow-focus` | `rgba(59,130,246,.15)` | Sombra al hacer focus |
 | `--drf-disabled-bg` | `#f3f4f6` | Fondo cuando disabled |
 
 ---
 
-## API endpoints
+## Definición inline — evitar el fetch
 
-### Formularios dinámicos
+Si el PHP puede proveer la definición del form (por ejemplo desde un preprocess hook), podés pasarla directamente en un atributo y React la usa sin hacer fetch a la API:
+
+```twig
+{# El JSON se serializa en Twig y React lo lee al montar #}
+<div
+  data-react-form
+  data-form-id="dynamic:[nombre-form]"
+  data-form-definition="{{ definicion_json|json_encode }}"
+></div>
+```
+
+En el componente, chequeás si llegó la definición inline antes de hacer fetch:
+
+```tsx
+useEffect(() => {
+  if (inlineDefinition) {
+    setDefinition(inlineDefinition);
+    setLoading(false);
+    return;
+  }
+  fetch(`/api/react-form/dynamic/${FORM_ID}?_format=json`)
+    // ...
+}, [inlineDefinition]);
+```
+
+---
+
+## API de referencia
 
 ```
 GET  /api/react-form/dynamic/{form_id}?_format=json
-     → Definición del form (campos, tipos, opciones)
+     → Definición del form (elements con type, title, options, weight...)
 
 GET  /api/react-form/dynamic/{form_id}/submissions?_format=json
-     → Últimas 20 submissions (más reciente primero)
+     → Últimas 20 submissions ordenadas por fecha desc
+     → [{ id, data: { campo: valor }, uid, created }]
 
 POST /api/react-form/dynamic/{form_id}/submit?_format=json
-     Header: X-CSRF-Token: {token de /session/token}
-     Body: JSON con los valores del form
+     Header: X-CSRF-Token: {fetch('/session/token')}
+     Body:   { "[campo_1]": "valor", "[campo_2]": "valor" }
      → { success: true, form_id: "..." }
-```
 
-### Usuario
-
-```
 GET  /api/react-form/user/{uid}?_format=json
      → Campos del form de edición de usuario
 
 POST /api/react-form/user/{uid}/submit?_format=json
-     → Guarda nombre, mail, contraseña, zona horaria, foto, roles
+     → Guarda nombre, mail, contraseña, timezone, foto, roles
 
 POST /api/react-form/user/{uid}/upload/picture
      Header: X-Filename: foto.jpg
-     Body: binary del archivo
-     → { success: true, fid: 42, url: "...", name: "foto.jpg" }
-```
-
-### Drupal Form API (clases PHP)
-
-```
-GET  /api/react-form/{form_id}?_format=json
-     form_id = "Drupal.mi_modulo.Form.MiForm"
-     → Serialización de la Form API a JSON
-
-POST /api/react-form/{form_id}/submit?_format=json
-     → Respuesta genérica (implementar lógica custom en el controller)
+     Body:   binary del archivo
+     → { success: true, fid, url, name }
 ```
 
 ---
 
-## Build del bundle
+## Build
 
 ```bash
-# Primera vez
-lando pnpm --dir web/modules/custom/drupal_react_form/js/react-form install
-
-# Después de cualquier cambio en /js/react-form/src/
+# Después de cualquier cambio en src/
 lando pnpm --dir web/modules/custom/drupal_react_form/js/react-form build
 
 # Limpiar caché de Drupal
-lando drush ev "opcache_reset();"
 lando drush cr
 ```
 
-Output: `dist/react-form.js` (~238KB) + `dist/react-form.css` (~22KB)
-
----
-
-## Comandos útiles
-
-```bash
-# Ver formularios creados desde el admin
-lando drush ev "print_r(\Drupal::service('drupal_react_form.dynamic_form_storage')->loadAll());"
-
-# Ver submissions de un form
-lando drush ev "
-  \$rows = \Drupal::database()->select('drupal_react_form_submissions','s')
-    ->fields('s')->condition('form_id','mi_form')
-    ->orderBy('created','DESC')->range(0,5)->execute()->fetchAll();
-  foreach(\$rows as \$r) echo date('d/m H:i',\$r->created).' '.\$r->data.PHP_EOL;
-"
-
-# Testear el endpoint de definición
-curl "http://drupal-react-form.lndo.site:8080/api/react-form/dynamic/mi_form?_format=json" | python3 -m json.tool
-
-# Testear el endpoint de submissions
-curl "http://drupal-react-form.lndo.site:8080/api/react-form/dynamic/mi_form/submissions?_format=json" | python3 -m json.tool
-
-# Resetear OPcache después de cambios PHP
-lando drush ev "opcache_reset(); echo 'cleared';"
-```
+Output: `dist/react-form.js` + `dist/react-form.css`

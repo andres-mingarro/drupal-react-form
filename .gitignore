@@ -28,4 +28,3 @@ Thumbs.db
 # Drupal DB dumps (sensible data)
 *.sql
 *.sql.gz
-drupal-db.gz

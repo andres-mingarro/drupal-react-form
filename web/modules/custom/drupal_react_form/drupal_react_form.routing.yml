@@ -1,3 +1,46 @@
+drupal_react_form.user_edit_page:
+  path: '/drupal-react-form/user/{uid}/edit'
+  defaults:
+    _controller: '\Drupal\drupal_react_form\Controller\UserReactFormController::demoPage'
+    _title: 'Editar perfil'
+  requirements:
+    _permission: 'access content'
+    uid: '\d+'
+
+drupal_react_form.user_get_definition:
+  path: '/api/react-form/user/{uid}'
+  defaults:
+    _controller: '\Drupal\drupal_react_form\Controller\UserReactFormController::getDefinition'
+    _title: 'User Form Definition'
+  requirements:
+    _permission: 'access content'
+    _format: 'json'
+    uid: '\d+'
+  methods: [GET]
+
+drupal_react_form.user_upload_picture:
+  path: '/api/react-form/user/{uid}/upload/picture'
+  defaults:
+    _controller: '\Drupal\drupal_react_form\Controller\UserReactFormController::uploadPicture'
+    _title: 'Upload User Picture'
+  requirements:
+    _permission: 'access content'
+    _csrf_request_header_token: 'TRUE'
+    uid: '\d+'
+  methods: [POST]
+
+drupal_react_form.user_submit_form:
+  path: '/api/react-form/user/{uid}/submit'
+  defaults:
+    _controller: '\Drupal\drupal_react_form\Controller\UserReactFormController::submitForm'
+    _title: 'User Form Submit'
+  requirements:
+    _permission: 'access content'
+    _csrf_request_header_token: 'TRUE'
+    _format: 'json'
+    uid: '\d+'
+  methods: [POST]
+
 drupal_react_form.demo_page:
   path: '/drupal-react-form/demo'
   defaults:
@@ -14,7 +57,7 @@ drupal_react_form.get_definition:
   requirements:
     _permission: 'access content'
     _format: 'json'
-  methods: [GET, OPTIONS]
+  methods: [GET]
 
 drupal_react_form.submit_form:
   path: '/api/react-form/{form_id}/submit'
@@ -23,5 +66,6 @@ drupal_react_form.submit_form:
     _title: 'React Form Submit'
   requirements:
     _permission: 'access content'
+    _csrf_request_header_token: 'TRUE'
     _format: 'json'
-  methods: [POST, OPTIONS]
+  methods: [POST]

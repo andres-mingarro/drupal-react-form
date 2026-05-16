@@ -1,0 +1,54 @@
+$schema: https://git.drupalcode.org/project/drupal/-/raw/HEAD/core/assets/schemas/v1/metadata.schema.json
+
+name: User Edit Form
+description: >
+  Renders the Drupal user edit form via React (drupal_react_form module).
+  Includes: username, email, password, language preference, admin language,
+  timezone, user picture, and for admins: status, roles, notify.
+  All field definitions are built inline — no API fetch required.
+
+libraryOverrides:
+  dependencies:
+    - drupal_react_form/react-form-app
+
+props:
+  type: object
+  required:
+    - uid
+    - name
+    - mail
+  additionalProperties: false
+  properties:
+    uid:
+      type: integer
+      title: User ID
+    name:
+      type: string
+      title: Current username
+    mail:
+      type: string
+      title: Current email
+    status:
+      type: string
+      title: Account status ('1' active, '0' blocked)
+    timezone:
+      type: string
+      title: Current timezone identifier
+    user_picture_url:
+      type: string
+      title: Absolute URL of the current user picture
+    is_admin:
+      type: boolean
+      title: Whether to show admin-only fields (status, roles, notify)
+    available_roles:
+      type: array
+      title: Available roles as [{value, label}] (admin only)
+    user_roles:
+      type: array
+      title: Role IDs currently assigned to the user
+    available_timezones:
+      type: array
+      title: Available timezones as [{value, label}]
+    title:
+      type: string
+      title: Optional heading above the form

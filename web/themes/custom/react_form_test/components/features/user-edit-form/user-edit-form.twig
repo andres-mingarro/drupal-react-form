@@ -1,0 +1,110 @@
+{#
+  SDC: user-edit-form
+  Todos los campos del formulario de edición de usuario de Drupal definidos aquí.
+  La definición JSON se pasa inline a React vía data-form-definition — sin fetch a la API.
+#}
+{{ attach_library('drupal_react_form/react-form-app') }}
+
+{# ── Campos base (mismo orden que el form nativo de Drupal) ── #}
+{% set def = {
+  'name': {
+    'key': 'name',
+    'type': 'textfield',
+    'title': 'Nombre de usuario',
+    'required': true,
+    'defaultValue': name,
+    'description': 'Varios caracteres especiales están permitidos, incluyendo espacio, punto (.), guión (-), apóstrofe (\'), guión bajo (_) y el signo @.',
+    'weight': 0,
+  },
+  'mail': {
+    'key': 'mail',
+    'type': 'email',
+    'title': 'Correo electrónico',
+    'required': true,
+    'defaultValue': mail,
+    'description': 'No se hace público. Se usa para iniciar sesión y recuperar la contraseña.',
+    'weight': 1,
+  },
+  'pass': {
+    'key': 'pass',
+    'type': 'password_confirm',
+    'title': 'Contraseña',
+    'description': 'Para cambiar la contraseña actual, ingresá la nueva en ambos campos. Dejá en blanco para no cambiarla.',
+    'weight': 2,
+  },
+  'timezone': {
+    'key': 'timezone',
+    'type': 'select',
+    'title': 'Zona horaria',
+    'description': 'Seleccioná la zona horaria local. Las fechas y horas en este sitio usarán este horario.',
+    'options': available_timezones,
+    'defaultValue': timezone,
+    'weight': 5,
+  },
+  'user_picture': {
+    'key': 'user_picture',
+    'type': 'managed_file',
+    'title': 'Foto de perfil',
+    'description': 'JPG, PNG o GIF. Máx 2 MB.',
+    'attributes': {
+      'upload_url': '/api/react-form/user/' ~ uid ~ '/upload/picture',
+      'accept': 'image/*',
+      'current_url': user_picture_url,
+    },
+    'weight': 10,
+  },
+  'submit': {
+    'key': 'submit',
+    'type': 'submit',
+    'value': 'Guardar cambios',
+    'weight': 20,
+  },
+} %}
+
+{# ── Campos exclusivos de administrador ── #}
+{% if is_admin is defined and is_admin %}
+  {% set def = def|merge({
+    'status': {
+      'key': 'status',
+      'type': 'radios',
+      'title': 'Estado',
+      'options': [
+        {'value': '1', 'label': 'Activo'},
+        {'value': '0', 'label': 'Bloqueado'},
+      ],
+      'defaultValue': status,
+      'weight': 6,
+    },
+    'roles': {
+      'key': 'roles',
+      'type': 'checkboxes',
+      'title': 'Roles',
+      'options': available_roles,
+      'defaultValue': user_roles,
+      'weight': 7,
+    },
+    'notify': {
+      'key': 'notify',
+      'type': 'checkbox',
+      'title': 'Notificar al usuario de la nueva cuenta',
+      'weight': 8,
+    },
+  }) %}
+{% endif %}
+
+{# ── Render ── #}
+{% set wrapper_attributes = (attributes is defined ? attributes : create_attribute()).addClass([
+  'user-edit-form',
+]) %}
+
+<section{{ wrapper_attributes }}>
+  {% if title is defined and title %}
+    <h2 class="user-edit-form__title">{{ title }}</h2>
+  {% endif %}
+
+  <div
+    data-react-form
+    data-form-id="user:{{ uid }}"
+    data-form-definition="{{ def|json_encode }}"
+  ></div>
+</section>

@@ -1,0 +1,108 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * @file
+ * Theme hooks for React Form Test.
+ */
+
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\node\NodeInterface;
+
+/**
+ * Implements hook_theme_suggestions_form_alter().
+ */
+function react_form_test_theme_suggestions_form_alter(array &$suggestions, array $variables): void {
+  if (empty($variables['element']['#form_id'])) {
+    return;
+  }
+
+  $form_id = strtr((string) $variables['element']['#form_id'], '-', '_');
+  $suggestions[] = 'form__' . $form_id;
+}
+
+/**
+ * Implements hook_theme_suggestions_node_alter().
+ */
+function react_form_test_theme_suggestions_node_alter(array &$suggestions, array $variables): void {
+  if (empty($variables['elements']['#node']) || !$variables['elements']['#node'] instanceof NodeInterface) {
+    return;
+  }
+
+  $node = $variables['elements']['#node'];
+  $view_mode = $variables['elements']['#view_mode'] ?? 'default';
+  $suggestions[] = 'node__' . $node->bundle() . '__' . strtr((string) $view_mode, '-', '_');
+}
+
+/**
+ * Implements hook_preprocess_input().
+ */
+function react_form_test_preprocess_input(array &$variables): void {
+  $variables['input_type'] = $variables['attributes']['type'] ?? '';
+}
+
+/**
+ * Implements hook_preprocess_page__front().
+ */
+function react_form_test_preprocess_page__front(array &$variables): void {
+  $current_user = \Drupal::currentUser();
+  $uid = (int) $current_user->id();
+
+  if ($uid === 0) {
+    return;
+  }
+
+  /** @var \Drupal\user\Entity\User $user */
+  $user = \Drupal\user\Entity\User::load($uid);
+  if (!$user) {
+    return;
+  }
+
+  $is_admin = $current_user->hasPermission('administer users');
+
+  $available_timezones = array_map(
+    static fn(string $tz): array => ['value' => $tz, 'label' => $tz],
+    \DateTimeZone::listIdentifiers(),
+  );
+
+  $picture_url = '';
+  $picture = $user->get('user_picture')->entity;
+  if ($picture) {
+    $picture_url = \Drupal::service('file_url_generator')->generateAbsoluteString($picture->getFileUri());
+  }
+
+  $available_roles = [];
+  $user_roles = [];
+  if ($is_admin) {
+    $all_roles = \Drupal::entityTypeManager()->getStorage('user_role')->loadMultiple();
+    foreach ($all_roles as $rid => $role) {
+      if (!in_array($rid, ['anonymous', 'authenticated'], TRUE)) {
+        $available_roles[] = ['value' => $rid, 'label' => $role->label()];
+      }
+    }
+    $user_roles = array_values(array_diff($user->getRoles(), ['authenticated']));
+  }
+
+  $variables['user_edit'] = [
+    'uid'                      => $uid,
+    'name'                     => $user->getAccountName(),
+    'mail'                     => $user->getEmail(),
+    'status'                   => $user->isActive() ? '1' : '0',
+    'timezone'                 => $user->getTimeZone() ?: 'UTC',
+    'user_picture_url'         => $picture_url,
+    'is_admin'                 => $is_admin,
+    'available_roles'          => $available_roles,
+    'user_roles'               => $user_roles,
+    'available_timezones'      => $available_timezones,
+  ];
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for search_block_form.
+ */
+function react_form_test_form_search_block_form_alter(array &$form, FormStateInterface $form_state, string $form_id): void {
+  if (isset($form['keys'])) {
+    $form['keys']['#attributes']['placeholder'] = t('Search');
+  }
+}

@@ -1,0 +1,19 @@
+.user-edit-form {
+  max-width: 720px;
+
+  &__title {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--rft-text);
+    margin: 0 0 var(--lg);
+    line-height: var(--font-line-height-2xl);
+  }
+
+  .drf-form {
+    background: var(--rft-surface);
+    border: 1px solid var(--rft-border);
+    border-radius: var(--rft-radius);
+    padding: var(--xl);
+    box-shadow: var(--shadow-md);
+  }
+}

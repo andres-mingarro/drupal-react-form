@@ -24,14 +24,12 @@ class ReactFormController extends ControllerBase {
 
   public function demoPage(): array {
     return [
-      '#type'   => 'inline_template',
+      '#type'     => 'inline_template',
       '#template' => '
         <div style="max-width:720px;margin:2rem auto;padding:0 1rem;">
           <h1>Demo — Drupal React Form</h1>
-          <p>Los campos de abajo están renderizados por componentes React. La definición viene del endpoint
-             <code>/api/react-form/Drupal\drupal_react_form\Form\DemoForm?_format=json</code>.</p>
           <div data-react-form
-               data-form-id="Drupal\drupal_react_form\Form\DemoForm"></div>
+               data-form-id="Drupal.drupal_react_form.Form.DemoForm"></div>
         </div>',
       '#attached' => [
         'library' => ['drupal_react_form/react-form-app'],
@@ -40,11 +38,15 @@ class ReactFormController extends ControllerBase {
   }
 
   public function getDefinition(string $form_id, Request $request): JsonResponse {
-    if (!preg_match('/^[a-zA-Z_\\\\]+$/', $form_id)) {
+    // Los puntos representan separadores de namespace (\) para evitar
+    // que los browsers normalicen %5C como separador de path.
+    $form_class = str_replace('.', '\\', $form_id);
+
+    if (!preg_match('/^[a-zA-Z_.]+$/', $form_id)) {
       return new JsonResponse(['success' => FALSE, 'error' => 'Invalid form ID'], 400);
     }
 
-    $elements = $this->formSerializer->serialize($form_id);
+    $elements = $this->formSerializer->serialize($form_class);
 
     return new JsonResponse(
       ['success' => TRUE, 'form_id' => $form_id, 'elements' => $elements],
@@ -57,12 +59,6 @@ class ReactFormController extends ControllerBase {
   }
 
   public function submitForm(string $form_id, Request $request): JsonResponse {
-    $token = $request->headers->get('X-CSRF-Token', '');
-
-    if (!\Drupal::csrfToken()->validate($token, 'rest')) {
-      return new JsonResponse(['success' => FALSE, 'error' => 'Invalid CSRF token'], 403);
-    }
-
     $data = json_decode($request->getContent(), TRUE) ?? [];
 
     return new JsonResponse([

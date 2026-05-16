@@ -14,6 +14,9 @@ import type {
 interface DrupalFormProps {
   formId: string;
   baseUrl?: string;
+  apiPath?: string;
+  submitPath?: string;
+  inlineDefinition?: DrupalFormDefinition | null;
   onSubmitSuccess?: (response: DrupalSubmitResponse) => void;
 }
 
@@ -73,7 +76,7 @@ function DrupalElementRenderer({ name, element, formValues, onChange, error }: E
   );
 }
 
-export function DrupalForm({ formId, baseUrl = '', onSubmitSuccess }: DrupalFormProps) {
+export function DrupalForm({ formId, baseUrl = '', apiPath, submitPath, inlineDefinition, onSubmitSuccess }: DrupalFormProps) {
   const [definition, setDefinition] = useState<DrupalFormDefinition | null>(null);
   const [values, setValues] = useState<FormValues>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -83,7 +86,22 @@ export function DrupalForm({ formId, baseUrl = '', onSubmitSuccess }: DrupalForm
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`${baseUrl}/api/react-form/${encodeURIComponent(formId)}?_format=json`)
+    if (inlineDefinition) {
+      setDefinition(inlineDefinition);
+      const initial: FormValues = {};
+      Object.entries(inlineDefinition).forEach(([k, el]) => {
+        if (el.defaultValue !== undefined) initial[k] = el.defaultValue;
+      });
+      setValues(initial);
+      setLoading(false);
+      return;
+    }
+
+    const url = apiPath
+      ? `${baseUrl}${apiPath}?_format=json`
+      : `${baseUrl}/api/react-form/${encodeURIComponent(formId)}?_format=json`;
+
+    fetch(url)
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json() as Promise<DrupalFormResponse>;
@@ -98,7 +116,7 @@ export function DrupalForm({ formId, baseUrl = '', onSubmitSuccess }: DrupalForm
       })
       .catch((e: Error) => setFetchError(e.message))
       .finally(() => setLoading(false));
-  }, [formId, baseUrl]);
+  }, [formId, baseUrl, apiPath, inlineDefinition]);
 
   const handleChange = useCallback((name: string, value: unknown) => {
     setValues((prev) => ({ ...prev, [name]: value }));
@@ -113,11 +131,17 @@ export function DrupalForm({ formId, baseUrl = '', onSubmitSuccess }: DrupalForm
     e.preventDefault();
     setSubmitting(true);
 
-    const csrfMeta = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]');
-    const csrfToken = csrfMeta?.content ?? '';
+    // Drupal REST CSRF token viene de /session/token, no del meta tag
+    const csrfToken = await fetch(`${baseUrl}/session/token`)
+      .then(r => r.text())
+      .catch(() => '');
 
     try {
-      const res = await fetch(`${baseUrl}/api/react-form/${encodeURIComponent(formId)}/submit?_format=json`, {
+      const surl = submitPath
+        ? `${baseUrl}${submitPath}?_format=json`
+        : `${baseUrl}/api/react-form/${encodeURIComponent(formId)}/submit?_format=json`;
+
+      const res = await fetch(surl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

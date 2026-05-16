@@ -44,6 +44,35 @@
     margin: 0;
   }
 
+  &__current {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+
+  &__current-label {
+    font-size: 0.8rem;
+    color: var(--drf-help-color, #6b7280);
+  }
+
+  &__img {
+    width: 5rem;
+    height: 5rem;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid var(--drf-border, #d1d5db);
+  }
+
+  &__upload-area { display: flex; flex-direction: column; gap: 0.5rem; }
+
+  &__uploading {
+    font-size: 0.85rem;
+    color: var(--drf-primary, #3b82f6);
+    margin: 0;
+    animation: drf-pulse 1s ease-in-out infinite;
+  }
+
   &__remove {
     flex-shrink: 0;
     padding: 0.25rem 0.75rem;
@@ -60,4 +89,9 @@
       color: #fff;
     }
   }
+}
+
+@keyframes drf-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }

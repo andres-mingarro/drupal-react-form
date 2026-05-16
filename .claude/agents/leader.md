@@ -48,21 +48,49 @@ lando pnpm --dir web/modules/custom/drupal_react_form/js/react-form install
 lando pnpm --dir web/modules/custom/drupal_react_form/js/react-form build
 ```
 
-### 4. Habilitar módulo
+### 4. Habilitar módulo y limpiar caches
+
 ```bash
 lando drush en drupal_react_form -y
+# Reset OPcache PRIMERO (evita que PHP sirva versiones viejas)
+lando drush ev "opcache_reset();"
 lando drush cr
 ```
 
-### 5. Reporte final
+### 5. Verificar que el build funciona
+
+```bash
+# Comprobar que el endpoint responde
+curl -s "http://localhost:32773/api/react-form/Drupal.drupal_react_form.Form.DemoForm?_format=json" | python3 -c "import sys,json; d=json.load(sys.stdin); print('OK:', len(d['elements']), 'elementos')"
+```
+
+### 6. Reporte final
 
 Reporta:
 - Archivos PHP creados
-- Archivos TypeScript/React creados
+- Archivos TypeScript/React creados  
 - Componentes SCSS creados
 - Estado del módulo Drupal
-- Cómo usar el módulo en Twig:
-  ```twig
-  <div data-react-form data-form-id="my_form_id"></div>
-  {{ attach_library('drupal_react_form/react-form-app') }}
-  ```
+- Comandos para usar el módulo:
+
+```twig
+{{-- En cualquier template Twig --}}
+<div data-react-form data-form-id="Drupal.mi_modulo.Form.MiForm"></div>
+{{ attach_library('drupal_react_form/react-form-app') }}
+```
+
+```
+URLs de demo:
+- http://drupal-react-form.lndo.site:8080/drupal-react-form/demo
+- http://drupal-react-form.lndo.site:8080/drupal-react-form/user/1/edit
+```
+
+## Troubleshooting conocido
+
+| Síntoma | Causa | Fix |
+|---|---|---|
+| Página en blanco, sin componentes React | `process.env.NODE_ENV` no definido en vite.config | Agregar `define: {'process.env.NODE_ENV': JSON.stringify('production')}` y rebuild |
+| HTTP 400 en el API | Browser convierte `%5C` a `/` en URLs | Usar puntos en `data-form-id`, no backslashes |
+| HTTP 403 "Invalid CSRF token" | Validación manual con seed incorrecto | Usar `_csrf_request_header_token: 'TRUE'` en routing.yml |
+| HTTP 500 "Call to undefined function user_roles()" | Función global de user.module no disponible | Usar `$this->entityTypeManager()->getStorage('user_role')->loadMultiple()` |
+| PHP sigue con error después de fix | OPcache tiene versión vieja | `lando drush ev "opcache_reset();"` + `lando drush cr` |

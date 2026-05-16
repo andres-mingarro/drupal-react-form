@@ -18,57 +18,108 @@ Eres el agente PHP especialista en Drupal 11. Escribes código PHP 8.3 moderno c
 - **Drupal**: 11.x, PHP 8.3, `declare(strict_types=1)` en todo archivo PHP
 - **Convención**: sin comentarios obvios, nombres descriptivos, inyección de dependencias
 
+## Reglas críticas aprendidas en producción
+
+### 1. CSRF en rutas POST — usar `_csrf_request_header_token: 'TRUE'`
+
+**NUNCA** validar CSRF manualmente con `\Drupal::csrfToken()->validate($token, 'rest')`.
+El seed que usa Drupal 11 para `/session/token` es `'X-CSRF-Token request header'`, no `'rest'`.
+Usar siempre el requirement de ruta:
+
+```yaml
+drupal_react_form.mi_ruta_post:
+  path: '/api/react-form/...'
+  requirements:
+    _permission: 'access content'
+    _csrf_request_header_token: 'TRUE'   # ← esto valida automáticamente
+  methods: [POST]
+```
+
+Y en el controller NO incluir ninguna lógica de CSRF — Drupal retorna 403 antes de llegar al controller si el token es inválido.
+
+### 2. Funciones globales de `user.module` — usar EntityTypeManager
+
+**NUNCA** llamar `user_roles()`, `user_load_by_name()`, `user_load_by_mail()` desde un namespace — fallan en contextos de routing.
+Usar siempre el EntityTypeManager:
+
+```php
+// ✗ INCORRECTO
+$roles = user_roles(TRUE);
+$user  = user_load_by_name($name);
+$user  = user_load_by_mail($mail);
+
+// ✓ CORRECTO
+$roles = $this->entityTypeManager()->getStorage('user_role')->loadMultiple();
+$users = $this->entityTypeManager()->getStorage('user')->loadByProperties(['name' => $name]);
+$users = $this->entityTypeManager()->getStorage('user')->loadByProperties(['mail' => $mail]);
+$user  = reset($users);  // loadByProperties retorna array
+```
+
+### 3. Form ID en URLs — usar puntos en lugar de backslashes
+
+Los browsers normalizan `%5C` (backslash codificado) como separador de path, rompiendo las rutas.
+En los `data-form-id` de HTML y en el PHP del controller: usar **puntos** como separador de namespace.
+
+```html
+<!-- ✗ INCORRECTO — browser convierte %5C a / -->
+<div data-form-id="Drupal\my_module\Form\MyForm">
+
+<!-- ✓ CORRECTO — puntos son URL-safe -->
+<div data-form-id="Drupal.my_module.Form.MyForm">
+```
+
+```php
+// ✓ En el controller, convertir puntos a backslashes para el class name:
+$form_class = str_replace('.', '\\', $form_id);
+if (!preg_match('/^[a-zA-Z_.]+$/', $form_id)) { /* invalid */ }
+$elements = $this->formSerializer->serialize($form_class);
+```
+
+### 4. OPcache — resetear después de cambios PHP
+
+Si los cambios PHP no se reflejan después de `drush cr`:
+```bash
+lando drush ev "opcache_reset(); echo 'cleared';"
+lando drush cr
+```
+
 ## Documentación de referencia
 
-Si necesitás detalles técnicos, consultá con WebFetch:
 - Form API elements: `https://api.drupal.org/api/drupal/elements/11.x`
 - Form API properties: `https://www.drupal.org/docs/drupal-apis/form-api/form-render-elements`
-- REST Resource Plugin: `https://www.drupal.org/docs/drupal-apis/restful-web-services-api/restful-web-services-api-overview`
-- Services/DI en Drupal 11: `https://www.drupal.org/docs/drupal-apis/services-and-dependency-injection`
 - Routing: `https://www.drupal.org/docs/drupal-apis/routing-system`
+- Services/DI: `https://www.drupal.org/docs/drupal-apis/services-and-dependency-injection`
 
-## Archivos que escribís
+## Patrones de routing.yml
 
-### drupal_react_form.info.yml
 ```yaml
-name: 'Drupal React Form'
-type: module
-description: 'Exposes Drupal Form API definitions as JSON REST endpoints for React rendering.'
-package: Custom
-core_version_requirement: ^11
-dependencies:
-  - drupal:rest
-  - drupal:serialization
-  - drupal:user
+# Ruta GET — sin CSRF
+mi_modulo.get_algo:
+  path: '/api/react-form/{form_id}'
+  defaults:
+    _controller: '\Drupal\mi_modulo\Controller\MiController::metodo'
+    _title: 'Titulo'
+  requirements:
+    _permission: 'access content'
+    _format: 'json'
+  methods: [GET]
+
+# Ruta POST — con CSRF automático via _csrf_request_header_token
+mi_modulo.post_algo:
+  path: '/api/react-form/{form_id}/submit'
+  defaults:
+    _controller: '\Drupal\mi_modulo\Controller\MiController::submit'
+    _title: 'Submit'
+  requirements:
+    _permission: 'access content'
+    _csrf_request_header_token: 'TRUE'
+    _format: 'json'
+  methods: [POST]
 ```
 
-### drupal_react_form.routing.yml
-Dos rutas REST:
-- `GET /api/react-form/{form_id}?_format=json` → `ReactFormController::getDefinition`
-- `POST /api/react-form/{form_id}/submit?_format=json` → `ReactFormController::submitForm`
-- Ambas: `requirements: { _permission: 'access content', _format: 'json' }`
+Nota: el linter del IDE puede quejarse de `_csrf_request_header_token` y `_format` — son falsos positivos. Drupal los soporta perfectamente.
 
-### drupal_react_form.services.yml
-```yaml
-services:
-  drupal_react_form.form_serializer:
-    class: Drupal\drupal_react_form\Service\FormSerializer
-    arguments: ['@form_builder', '@current_user', '@logger.channel.default']
-```
-
-### drupal_react_form.libraries.yml
-```yaml
-react-form-app:
-  version: 1.x
-  js:
-    dist/react-form.js: { minified: false, preprocess: false }
-  dependencies:
-    - core/drupalSettings
-```
-
-### src/Service/FormSerializer.php — EL ARCHIVO MÁS CRÍTICO
-
-Namespace: `Drupal\drupal_react_form\Service`
+## FormSerializer.php — patrón completo
 
 ```php
 <?php
@@ -92,9 +143,9 @@ class FormSerializer {
       $form = $this->formBuilder->getForm($form_id);
       return $this->serializeElements($form);
     } catch (\Throwable $e) {
-      $this->logger->error('drupal_react_form: could not serialize @form: @msg', [
+      $this->logger->error('drupal_react_form: cannot serialize @form — @msg', [
         '@form' => $form_id,
-        '@msg' => $e->getMessage(),
+        '@msg'  => $e->getMessage(),
       ]);
       return [];
     }
@@ -103,12 +154,8 @@ class FormSerializer {
   private function serializeElements(array $form): array {
     $result = [];
     foreach ($form as $key => $element) {
-      if (str_starts_with((string) $key, '#') || str_starts_with((string) $key, '_')) {
-        continue;
-      }
-      if (!is_array($element) || !isset($element['#type'])) {
-        continue;
-      }
+      if (!is_string($key) || str_starts_with($key, '#') || str_starts_with($key, '_')) continue;
+      if (!is_array($element) || !isset($element['#type'])) continue;
       $result[$key] = $this->serializeElement($key, $element);
     }
     uasort($result, static fn($a, $b) => ($a['weight'] ?? 0) <=> ($b['weight'] ?? 0));
@@ -122,16 +169,16 @@ class FormSerializer {
       'title'              => isset($el['#title']) ? (string) $el['#title'] : null,
       'description'        => isset($el['#description']) ? (string) $el['#description'] : null,
       'descriptionDisplay' => $el['#description_display'] ?? 'after',
-      'required'           => (bool) ($el['#required'] ?? false),
+      'required'           => (bool) ($el['#required'] ?? FALSE),
       'defaultValue'       => $el['#default_value'] ?? null,
       'value'              => $el['#value'] ?? null,
       'placeholder'        => $el['#placeholder'] ?? null,
-      'disabled'           => (bool) ($el['#disabled'] ?? false),
-      'multiple'           => (bool) ($el['#multiple'] ?? false),
+      'disabled'           => (bool) ($el['#disabled'] ?? FALSE),
+      'multiple'           => (bool) ($el['#multiple'] ?? FALSE),
       'options'            => $this->serializeOptions($el['#options'] ?? []),
       'attributes'         => $el['#attributes'] ?? [],
       'states'             => $this->serializeStates($el['#states'] ?? []),
-      'access'             => (bool) ($el['#access'] ?? true),
+      'access'             => (bool) ($el['#access'] ?? TRUE),
       'weight'             => (int) ($el['#weight'] ?? 0),
       'maxlength'          => $el['#maxlength'] ?? null,
       'min'                => $el['#min'] ?? null,
@@ -144,129 +191,37 @@ class FormSerializer {
       'titleDisplay'       => $el['#title_display'] ?? 'before',
       'children'           => $this->serializeChildren($el),
     ];
-
     return array_filter($data, static fn($v) => $v !== null && $v !== '' && $v !== []);
   }
 
-  private function serializeOptions(array $options): array {
-    $result = [];
-    foreach ($options as $value => $label) {
-      if (is_array($label)) {
-        // Optgroup
-        foreach ($label as $subValue => $subLabel) {
-          $result[] = ['value' => (string) $subValue, 'label' => (string) $subLabel, 'group' => (string) $value];
-        }
-      } else {
-        $result[] = ['value' => (string) $value, 'label' => (string) $label];
-      }
-    }
-    return $result;
-  }
-
-  private function serializeStates(array $states): array {
-    $result = [];
-    foreach ($states as $state => $conditions) {
-      if (!is_array($conditions)) {
-        continue;
-      }
-      foreach ($conditions as $selector => $condition) {
-        if (!is_string($selector)) {
-          continue;
-        }
-        preg_match('/\[name=["\']([^"\']+)["\']\]/', $selector, $m);
-        $field = $m[1] ?? $selector;
-        if (is_array($condition)) {
-          $conditionKey = (string) array_key_first($condition);
-          $conditionVal = reset($condition);
-          $result[$state][] = ['field' => $field, 'condition' => $conditionKey, 'value' => $conditionVal];
-        }
-      }
-    }
-    return $result;
-  }
-
-  private function serializeChildren(array $el): array {
-    $structural = ['fieldset', 'details', 'container', 'form'];
-    if (!in_array($el['#type'] ?? '', $structural, true)) {
-      return [];
-    }
-    return $this->serializeElements($el);
-  }
+  // ... serializeOptions, serializeStates, serializeChildren igual que antes
 }
 ```
 
-### src/Controller/ReactFormController.php
+## ReactFormController.php — patrón correcto
 
 ```php
-<?php
-declare(strict_types=1);
-
-namespace Drupal\drupal_react_form\Controller;
-
-use Drupal\Core\Controller\ControllerBase;
-use Drupal\drupal_react_form\Service\FormSerializer;
-use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
-
-class ReactFormController extends ControllerBase {
-
-  public function __construct(
-    private readonly FormSerializer $formSerializer,
-  ) {}
-
-  public static function create(ContainerInterface $container): static {
-    return new static(
-      $container->get('drupal_react_form.form_serializer'),
-    );
+// getDefinition: convierte puntos a backslashes
+public function getDefinition(string $form_id, Request $request): JsonResponse {
+  $form_class = str_replace('.', '\\', $form_id);
+  if (!preg_match('/^[a-zA-Z_.]+$/', $form_id)) {
+    return new JsonResponse(['success' => FALSE, 'error' => 'Invalid form ID'], 400);
   }
+  $elements = $this->formSerializer->serialize($form_class);
+  return new JsonResponse(['success' => TRUE, 'form_id' => $form_id, 'elements' => $elements], 200,
+    ['Access-Control-Allow-Origin' => '*', 'Access-Control-Allow-Headers' => 'Content-Type, X-CSRF-Token']);
+}
 
-  public function getDefinition(string $form_id, Request $request): JsonResponse {
-    if (!preg_match('/^[a-zA-Z_\\\\]+$/', $form_id)) {
-      return new JsonResponse(['success' => false, 'error' => 'Invalid form ID'], 400);
-    }
-
-    $elements = $this->formSerializer->serialize($form_id);
-
-    return new JsonResponse(
-      ['success' => true, 'form_id' => $form_id, 'elements' => $elements],
-      200,
-      ['Access-Control-Allow-Origin' => '*'],
-    );
-  }
-
-  public function submitForm(string $form_id, Request $request): JsonResponse {
-    $token = $request->headers->get('X-CSRF-Token', '');
-    if (!\Drupal::csrfToken()->validate($token, 'rest')) {
-      return new JsonResponse(['success' => false, 'error' => 'Invalid CSRF token'], 403);
-    }
-
-    $data = json_decode($request->getContent(), true) ?? [];
-
-    // Aquí se puede extender para procesar el submit via FormBuilder
-    return new JsonResponse(['success' => true, 'received' => array_keys($data)]);
-  }
+// submitForm: SIN validación CSRF manual — la hace _csrf_request_header_token en la ruta
+public function submitForm(string $form_id, Request $request): JsonResponse {
+  $data = json_decode($request->getContent(), TRUE) ?? [];
+  return new JsonResponse(['success' => TRUE, 'received' => array_keys($data)]);
 }
 ```
 
-### drupal_react_form.module
+## data-form-id en templates
+
 ```php
-<?php
-declare(strict_types=1);
-
-use Drupal\Core\Routing\RouteMatchInterface;
-
-function drupal_react_form_help(string $route_name, RouteMatchInterface $route_match): string {
-  if ($route_name === 'help.page.drupal_react_form') {
-    return '<p>' . t('Exposes Drupal Form API as JSON endpoints for React rendering. Use <code>data-react-form data-form-id="your_form_class"</code> en cualquier elemento HTML.') . '</p>';
-  }
-  return '';
-}
-```
-
-### config/install/drupal_react_form.settings.yml
-```yaml
-allowed_forms: []
-cors_origins:
-  - '*'
+// En controladores Drupal, usar puntos como separador de namespace:
+'#template' => '<div data-react-form data-form-id="Drupal.mi_modulo.Form.MiForm"></div>',
 ```

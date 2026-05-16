@@ -20,7 +20,35 @@ Eres el agente PHP especialista en Drupal 11. Escribes código PHP 8.3 moderno c
 
 ## Reglas críticas aprendidas en producción
 
-### 1. CSRF en rutas POST — usar `_csrf_request_header_token: 'TRUE'`
+### 1. Form classes con rebuild — NO usar `private readonly` para servicios
+
+`FormBase` usa `DependencySerializationTrait`. En un rebuild (add/remove field), Drupal serializa el objeto con `__sleep()` y lo restaura con `__wakeup()`. PHP no puede asignar propiedades `readonly` en `__wakeup()`, así que el servicio queda sin inicializar → `TypeError: must not be accessed before initialization`.
+
+```php
+// ✗ INCORRECTO — rompe en forms con rebuild (add field, remove field)
+public function __construct(
+  private readonly MyService $service,
+) {}
+
+// ✓ CORRECTO — DependencySerializationTrait puede restaurarlo
+public function __construct(
+  private MyService $service,
+) {}
+```
+
+Para forms con rebuild intensivo, mejor aún usar un getter lazy que evita la serialización completamente:
+
+```php
+class MiForm extends FormBase {
+  // Sin constructor, sin propiedad tipada
+  private function storage(): DynamicFormStorage {
+    return \Drupal::service('drupal_react_form.dynamic_form_storage');
+  }
+  // Usar $this->storage()->load(...) en todos los métodos
+}
+```
+
+### 2. CSRF en rutas POST — usar `_csrf_request_header_token: 'TRUE'`
 
 **NUNCA** validar CSRF manualmente con `\Drupal::csrfToken()->validate($token, 'rest')`.
 El seed que usa Drupal 11 para `/session/token` es `'X-CSRF-Token request header'`, no `'rest'`.

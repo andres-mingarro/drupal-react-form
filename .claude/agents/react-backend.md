@@ -143,37 +143,92 @@ export const ELEMENT_TYPE_MAP: Record<string, FieldComponent> = {
 };
 ```
 
-### src/index.tsx — detección de form types y construcción de URLs
+### src/index.tsx — tres tipos de form ID + DYNAMIC_REGISTRY
+
+El `index.tsx` maneja tres casos y tiene un registry opcional para componentes dedicados:
 
 ```tsx
-import { StrictMode } from 'react';
+import { type ComponentType, StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { DrupalForm } from './DrupalForm';
+import { UserEditForm } from './features/UserEditForm';
+import { MiForm } from './features/MiForm';
+import type { DrupalFormDefinition } from './types/drupal-form';
+
+// Registry: ID del form dinámico → componente con markup custom.
+// Si NO está en el registry, DrupalForm genérico funciona automáticamente.
+const DYNAMIC_REGISTRY: Record<string, ComponentType<{ baseUrl?: string }>> = {
+  mi_form: MiForm,
+};
 
 document.querySelectorAll<HTMLElement>('[data-react-form]').forEach((container) => {
   const formId  = container.dataset.formId ?? '';
   const baseUrl = container.dataset.baseUrl ?? '';
-
   if (!formId) return;
 
-  // user:42  →  /api/react-form/user/42
-  // Drupal.my_module.Form.MyForm  →  /api/react-form/Drupal.my_module.Form.MyForm
-  const userMatch  = formId.match(/^user:(\d+)$/);
-  const apiPath    = userMatch
-    ? `/api/react-form/user/${userMatch[1]}`
-    : `/api/react-form/${formId}`;
+  // Definición inline: evita el fetch a la API si está presente
+  const rawDefinition = container.dataset.formDefinition ?? null;
+  let inlineDefinition: DrupalFormDefinition | null = null;
+  if (rawDefinition) {
+    try { inlineDefinition = JSON.parse(rawDefinition) as DrupalFormDefinition; }
+    catch { /* ignora JSON inválido */ }
+  }
 
-  const submitPath = userMatch
-    ? `/api/react-form/user/${userMatch[1]}/submit`
-    : `/api/react-form/${formId}/submit`;
+  // 1. user:42 → UserEditForm dedicado
+  const userMatch = formId.match(/^user:(\d+)$/);
+  if (userMatch) {
+    createRoot(container).render(
+      <StrictMode>
+        <UserEditForm uid={parseInt(userMatch[1], 10)} baseUrl={baseUrl} inlineDefinition={inlineDefinition} />
+      </StrictMode>,
+    );
+    return;
+  }
 
+  // 2. dynamic:mi_form → componente del registry, o DrupalForm genérico con API dinámica
+  const dynamicMatch = formId.match(/^dynamic:(.+)$/);
+  if (dynamicMatch) {
+    const dynamicId = dynamicMatch[1];
+    const Dedicated = DYNAMIC_REGISTRY[dynamicId];
+    if (Dedicated) {
+      createRoot(container).render(<StrictMode><Dedicated baseUrl={baseUrl} /></StrictMode>);
+      return;
+    }
+    createRoot(container).render(
+      <StrictMode>
+        <DrupalForm formId={dynamicId} baseUrl={baseUrl}
+          apiPath={`/api/react-form/dynamic/${dynamicId}`}
+          submitPath={`/api/react-form/dynamic/${dynamicId}/submit`}
+          inlineDefinition={inlineDefinition} />
+      </StrictMode>,
+    );
+    return;
+  }
+
+  // 3. Drupal.M.F.Bar → DrupalForm genérico con Form API PHP
   createRoot(container).render(
     <StrictMode>
-      <DrupalForm formId={formId} baseUrl={baseUrl} apiPath={apiPath} submitPath={submitPath} />
+      <DrupalForm formId={formId} baseUrl={baseUrl}
+        apiPath={`/api/react-form/${formId}`}
+        submitPath={`/api/react-form/${formId}/submit`}
+        inlineDefinition={inlineDefinition} />
     </StrictMode>,
   );
 });
 ```
+
+### src/features/[NombreForm]/ — componente con markup custom
+
+Los componentes dedicados viven en `src/features/`:
+
+```
+src/features/MiForm/
+  MiForm.tsx     ← lógica + markup
+  MiForm.scss    ← diseño con override de --drf-* en scope
+  index.ts       ← export { MiForm } from './MiForm'
+```
+
+El componente maneja su propio fetch, estado y submit. Ver README del módulo para el patrón completo.
 
 ### src/DrupalForm.tsx — props y CSRF correcto
 
@@ -181,8 +236,9 @@ document.querySelectorAll<HTMLElement>('[data-react-form]').forEach((container) 
 interface DrupalFormProps {
   formId: string;
   baseUrl?: string;
-  apiPath?: string;      // override de la URL de definición
-  submitPath?: string;   // override de la URL de submit
+  apiPath?: string;
+  submitPath?: string;
+  inlineDefinition?: DrupalFormDefinition | null;  // usa esto si está, sino fetchea
   onSubmitSuccess?: (response: DrupalSubmitResponse) => void;
 }
 

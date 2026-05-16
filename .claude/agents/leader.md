@@ -94,3 +94,5 @@ URLs de demo:
 | HTTP 403 "Invalid CSRF token" | Validación manual con seed incorrecto | Usar `_csrf_request_header_token: 'TRUE'` en routing.yml |
 | HTTP 500 "Call to undefined function user_roles()" | Función global de user.module no disponible | Usar `$this->entityTypeManager()->getStorage('user_role')->loadMultiple()` |
 | PHP sigue con error después de fix | OPcache tiene versión vieja | `lando drush ev "opcache_reset();"` + `lando drush cr` |
+| TypeError: must not be accessed before initialization en Form class | `private readonly` incompatible con `DependencySerializationTrait` en rebuilds | Cambiar a `private` (sin readonly), o usar getter lazy `\Drupal::service(...)` en vez de DI por constructor |
+| Form dinámico no aparece sin componente dedicado | `dynamic:xxx` no estaba en DYNAMIC_REGISTRY | No hace falta registrarlo — el fallback a DrupalForm genérico funciona automáticamente |

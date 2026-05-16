@@ -3,6 +3,8 @@ type: module
 description: 'Exposes Drupal Form API definitions as JSON REST endpoints for React rendering.'
 package: Custom
 core_version_requirement: ^11
+configure: drupal_react_form.admin_list
+
 dependencies:
   - drupal:rest
   - drupal:serialization

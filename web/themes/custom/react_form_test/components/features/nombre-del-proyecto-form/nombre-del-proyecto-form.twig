@@ -1,0 +1,16 @@
+{{ attach_library('drupal_react_form/react-form-app') }}
+
+{% set wrapper_attributes = (attributes is defined ? attributes : create_attribute()).addClass([
+  'nombre-del-proyecto-form',
+]) %}
+
+<section{{ wrapper_attributes }}>
+  {% if title is defined and title %}
+    <h2 class="nombre-del-proyecto-form__title">{{ title }}</h2>
+  {% endif %}
+
+  <div
+    data-react-form
+    data-form-id="dynamic:nombre_del_proyecto"
+  ></div>
+</section>

@@ -1,0 +1,118 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Creates the drupal_react_forms table.
+ */
+function drupal_react_form_update_10001(): void {
+  $schema = drupal_react_form_schema();
+  $db_schema = \Drupal::database()->schema();
+
+  if (!$db_schema->tableExists('drupal_react_forms')) {
+    $db_schema->createTable('drupal_react_forms', $schema['drupal_react_forms']);
+  }
+}
+
+/**
+ * Creates the drupal_react_form_submissions table.
+ */
+function drupal_react_form_update_10002(): void {
+  $schema = drupal_react_form_schema();
+  $db_schema = \Drupal::database()->schema();
+
+  if (!$db_schema->tableExists('drupal_react_form_submissions')) {
+    $db_schema->createTable('drupal_react_form_submissions', $schema['drupal_react_form_submissions']);
+  }
+}
+
+/**
+ * Implements hook_schema().
+ */
+function drupal_react_form_schema(): array {
+  return [
+    'drupal_react_forms' => [
+      'description' => 'Stores dynamic React form definitions.',
+      'fields' => [
+        'id' => [
+          'description' => 'Machine name of the form.',
+          'type'        => 'varchar',
+          'length'      => 64,
+          'not null'    => TRUE,
+          'default'     => '',
+        ],
+        'label' => [
+          'description' => 'Human-readable label.',
+          'type'        => 'varchar',
+          'length'      => 255,
+          'not null'    => TRUE,
+          'default'     => '',
+        ],
+        'fields' => [
+          'description' => 'JSON array of field definitions.',
+          'type'        => 'text',
+          'size'        => 'big',
+          'not null'    => TRUE,
+        ],
+        'created' => [
+          'description' => 'Unix timestamp of creation.',
+          'type'        => 'int',
+          'unsigned'    => TRUE,
+          'not null'    => TRUE,
+          'default'     => 0,
+        ],
+        'changed' => [
+          'description' => 'Unix timestamp of last update.',
+          'type'        => 'int',
+          'unsigned'    => TRUE,
+          'not null'    => TRUE,
+          'default'     => 0,
+        ],
+      ],
+      'primary key' => ['id'],
+    ],
+    'drupal_react_form_submissions' => [
+      'description' => 'Stores submitted data from dynamic React forms.',
+      'fields' => [
+        'id' => [
+          'description' => 'Auto-increment submission ID.',
+          'type'        => 'serial',
+          'unsigned'    => TRUE,
+          'not null'    => TRUE,
+        ],
+        'form_id' => [
+          'description' => 'Machine name of the form.',
+          'type'        => 'varchar',
+          'length'      => 64,
+          'not null'    => TRUE,
+          'default'     => '',
+        ],
+        'data' => [
+          'description' => 'JSON of submitted field values.',
+          'type'        => 'text',
+          'size'        => 'big',
+          'not null'    => TRUE,
+        ],
+        'uid' => [
+          'description' => 'User ID who submitted (0 = anonymous).',
+          'type'        => 'int',
+          'unsigned'    => TRUE,
+          'not null'    => TRUE,
+          'default'     => 0,
+        ],
+        'created' => [
+          'description' => 'Unix timestamp of submission.',
+          'type'        => 'int',
+          'unsigned'    => TRUE,
+          'not null'    => TRUE,
+          'default'     => 0,
+        ],
+      ],
+      'primary key' => ['id'],
+      'indexes' => [
+        'form_id' => ['form_id'],
+        'uid'     => ['uid'],
+      ],
+    ],
+  ];
+}

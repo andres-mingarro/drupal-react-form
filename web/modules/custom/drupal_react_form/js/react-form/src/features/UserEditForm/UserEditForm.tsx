@@ -101,37 +101,47 @@ export function UserEditForm({ uid, baseUrl = '', inlineDefinition }: UserEditFo
 
       {submitted && (
         <div className="uef__success" role="status" aria-live="polite">
-          Cambios guardados correctamente.
+          ✓ Cambios guardados correctamente.
         </div>
       )}
 
-      {/* ── Cuenta ── */}
-      <div className="uef__section">
-        <h3 className="uef__section-title">Cuenta</h3>
-        {field('name') && <TextField      {...props('name')} />}
-        {field('mail') && <EmailField     {...props('mail')} />}
-        {field('pass') && <PasswordConfirm {...props('pass')} />}
+      <div className="uef__grid">
+
+        {/* ── Columna izquierda: Cuenta ── */}
+        <div className="uef__col">
+          <h3 className="uef__section-title">Cuenta</h3>
+
+          {/* name + mail en la misma fila */}
+          <div className="uef__row">
+            {field('name') && <TextField  {...props('name')} />}
+            {field('mail') && <EmailField {...props('mail')} />}
+          </div>
+
+          {/* contraseña ocupa el ancho completo */}
+          {field('pass') && <PasswordConfirm {...props('pass')} />}
+        </div>
+
+        {/* ── Columna derecha: Perfil ── */}
+        <div className="uef__col">
+          <h3 className="uef__section-title">Perfil</h3>
+          {field('user_picture') && <ManagedFileField {...props('user_picture')} />}
+          {field('timezone')     && <SelectField      {...props('timezone')} />}
+        </div>
+
       </div>
 
-      {/* ── Zona horaria ── */}
-      <div className="uef__section">
-        <h3 className="uef__section-title">Zona horaria</h3>
-        {field('timezone') && <SelectField {...props('timezone')} />}
-      </div>
-
-      {/* ── Foto de perfil ── */}
-      <div className="uef__section">
-        <h3 className="uef__section-title">Foto de perfil</h3>
-        {field('user_picture') && <ManagedFileField {...props('user_picture')} />}
-      </div>
-
-      {/* ── Administración (solo admins) ── */}
+      {/* ── Administración (solo admins) — ancho completo ── */}
       {(field('status') || field('roles') || field('notify')) && (
-        <div className="uef__section">
+        <div className="uef__section uef__section--admin">
           <h3 className="uef__section-title">Administración</h3>
-          {field('status') && <RadioGroup    {...props('status')} />}
-          {field('roles')  && <CheckboxGroup {...props('roles')} />}
-          {field('notify') && <CheckboxField {...props('notify')} />}
+          <div className="uef__admin-grid">
+            {/* status + roles en la misma fila */}
+            <div className="uef__row">
+              {field('status') && <RadioGroup    {...props('status')} />}
+              {field('roles')  && <CheckboxGroup {...props('roles')} />}
+            </div>
+            {field('notify') && <CheckboxField {...props('notify')} />}
+          </div>
         </div>
       )}
 

@@ -12,6 +12,10 @@
   <main class="layout-main layout-main--front" role="main">
     {{ page.content }}
 
+    {% include 'react_form_test:nombre-del-proyecto-form' with {
+      title: 'Nombre del proyecto',
+    } %}
+
     {% if user_edit is defined %}
       {% include 'react_form_test:user-edit-form' with {
         uid:                      user_edit.uid,

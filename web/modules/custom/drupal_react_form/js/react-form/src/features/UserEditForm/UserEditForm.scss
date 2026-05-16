@@ -1,43 +1,187 @@
+// ── UserEditForm — bordó · naranja · amarillo ────────────────────────────────
 .uef {
-  &__section {
-    border: 1px solid var(--drf-border, #d9dee8);
-    border-radius: var(--drf-radius, 6px);
-    padding: 1.25rem 1.5rem;
-    margin-bottom: 1rem;
+  // Paleta
+  --uef-bg:           #1a0810;
+  --uef-surface:      #2b0f1c;
+  --uef-surface-alt:  #360f1f;
+  --uef-border:       rgba(180, 40, 80, 0.35);
+  --uef-wine:         #9b1b3a;
+  --uef-wine-light:   #c1345a;
+  --uef-orange:       #ea580c;
+  --uef-orange-light: #fb923c;
+  --uef-yellow:       #eab308;
+  --uef-yellow-light: #fde047;
+  --uef-text:         #fef3c7;
+  --uef-muted:        #d4a1b0;
+
+  // Override variables drf para los field components
+  --drf-primary:      var(--uef-orange);
+  --drf-primary-hover:var(--uef-orange-light);
+  --drf-border:       rgba(234, 88, 12, 0.3);
+  --drf-radius:       6px;
+  --drf-bg:           rgba(255, 255, 255, 0.05);
+  --drf-text:         var(--uef-text);
+  --drf-label-color:  var(--uef-yellow);
+  --drf-help-color:   var(--uef-muted);
+  --drf-error:        #fb7185;
+  --drf-shadow-focus: rgba(234, 88, 12, 0.3);
+  --drf-disabled-bg:  rgba(255, 255, 255, 0.03);
+
+  background: var(--uef-bg);
+  border-radius: 16px;
+  padding: 2rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  color: var(--uef-text);
+  border: 1px solid var(--uef-wine);
+  box-shadow:
+    0 0 0 1px rgba(155, 27, 58, 0.2),
+    0 24px 48px rgba(0, 0, 0, 0.5);
+
+  // ── Grid dos columnas ─────────────────────────────────────────────────────
+  &__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+
+    @media (max-width: 640px) { grid-template-columns: 1fr; }
   }
 
+  &__col {
+    background: var(--uef-surface);
+    border: 1px solid var(--uef-border);
+    border-radius: 10px;
+    padding: 1.5rem;
+  }
+
+  // Fila interna de 2 campos side-by-side
+  &__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+
+    @media (max-width: 480px) { grid-template-columns: 1fr; }
+  }
+
+  // ── Sección admin ─────────────────────────────────────────────────────────
+  &__section--admin {
+    background: var(--uef-surface-alt);
+    border: 1px solid rgba(234, 179, 8, 0.25);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  &__admin-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+
+  // ── Títulos de sección ────────────────────────────────────────────────────
   &__section-title {
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: var(--drf-help-color, #6b7280);
+    font-size: 0.6875rem;
+    font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin: 0 0 1rem;
+    letter-spacing: 0.1em;
+    color: var(--uef-orange);
+    margin: 0 0 1.25rem;
+    padding-bottom: 0.625rem;
+    border-bottom: 1px solid rgba(234, 88, 12, 0.25);
   }
 
+  // ── Acciones ──────────────────────────────────────────────────────────────
   &__actions {
     display: flex;
     justify-content: flex-end;
-    padding-top: 0.5rem;
+
+    .drf-field--submit { margin-bottom: 0; }
+
+    .drf-submit {
+      background: linear-gradient(135deg, var(--uef-wine) 0%, var(--uef-orange) 60%, var(--uef-yellow) 100%);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem 2.5rem;
+      font-size: 0.9375rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      box-shadow: 0 4px 16px rgba(234, 88, 12, 0.4);
+
+      &:hover   { opacity: 0.9; transform: translateY(-1px); }
+      &:active  { transform: translateY(0); }
+      &:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+    }
   }
 
+  // ── Mensaje de éxito ──────────────────────────────────────────────────────
   &__success {
-    background: #f0fdf4;
-    border: 1px solid #86efac;
-    color: #15803d;
-    border-radius: var(--drf-radius, 6px);
-    padding: 0.75rem 1rem;
-    margin-bottom: 1rem;
-    font-weight: 500;
+    background: rgba(234, 179, 8, 0.12);
+    border: 1px solid rgba(234, 179, 8, 0.4);
+    border-radius: 8px;
+    color: var(--uef-yellow-light);
+    padding: 0.875rem 1.25rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
   }
 
   &--loading,
-  &--error,
-  &--success {
-    padding: 1.5rem;
-    color: var(--drf-help-color, #6b7280);
+  &--error {
+    padding: 2rem;
+    color: var(--uef-muted);
+    background: var(--uef-bg);
+    border-radius: 16px;
+  }
+  &--error { color: #fb7185; }
+
+  // ── Field components dentro de este form ─────────────────────────────────
+  .drf-field__label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--uef-yellow);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 
-  &--error { color: var(--drf-error, #dc2626); }
-  &--success { color: var(--drf-success, #16a34a); }
+  .drf-field__label--required::after { color: var(--uef-orange-light); }
+
+  .drf-field__input,
+  .drf-field__textarea {
+    background: var(--drf-bg);
+    border: 1px solid var(--drf-border);
+    border-radius: var(--drf-radius);
+    color: var(--uef-text);
+    font-size: 0.9375rem;
+
+    &::placeholder { color: rgba(180, 40, 80, 0.5); }
+
+    &:focus {
+      border-color: var(--uef-orange);
+      box-shadow: 0 0 0 3px var(--drf-shadow-focus);
+      outline: none;
+    }
+
+    &--error { border-color: #fb7185; }
+
+    option {
+      background: #2b0f1c;
+      color: var(--uef-text);
+    }
+  }
+
+  .drf-field__description { color: var(--uef-muted); font-size: 0.8rem; }
+  .drf-field__error        { color: #fb7185; font-size: 0.8rem; }
+
+  // checkboxes y radios
+  .drf-field--checkboxes,
+  .drf-field--radios {
+    legend { color: var(--uef-yellow); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+  }
+
+  .drf-field--checkbox__label,
+  .drf-field--checkboxes__option span:last-child,
+  .drf-field--radios__option span:last-child { color: var(--uef-text); }
 }

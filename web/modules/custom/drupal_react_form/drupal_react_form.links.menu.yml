@@ -1,0 +1,5 @@
+drupal_react_form.admin_list:
+  title: 'Formularios React'
+  route_name: drupal_react_form.admin_list
+  parent: system.admin_structure
+  description: 'Crear y gestionar formularios React dinámicos'

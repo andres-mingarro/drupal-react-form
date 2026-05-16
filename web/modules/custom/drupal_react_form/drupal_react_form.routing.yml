@@ -1,3 +1,67 @@
+drupal_react_form.admin_list:
+  path: '/admin/drupal-react-form/forms'
+  defaults:
+    _controller: '\Drupal\drupal_react_form\Controller\DynamicFormAdminController::listForms'
+    _title: 'Formularios React'
+  requirements:
+    _permission: 'administer drupal react forms'
+
+drupal_react_form.admin_add:
+  path: '/admin/drupal-react-form/forms/add'
+  defaults:
+    _form: '\Drupal\drupal_react_form\Form\DynamicFormEditForm'
+    _title: 'Agregar formulario'
+  requirements:
+    _permission: 'administer drupal react forms'
+
+drupal_react_form.admin_edit:
+  path: '/admin/drupal-react-form/forms/{form_id}/edit'
+  defaults:
+    _form: '\Drupal\drupal_react_form\Form\DynamicFormEditForm'
+    _title: 'Editar formulario'
+  requirements:
+    _permission: 'administer drupal react forms'
+
+drupal_react_form.admin_delete:
+  path: '/admin/drupal-react-form/forms/{form_id}/delete'
+  defaults:
+    _controller: '\Drupal\drupal_react_form\Controller\DynamicFormAdminController::deleteForm'
+    _title: 'Eliminar formulario'
+  requirements:
+    _permission: 'administer drupal react forms'
+    _csrf_token: 'TRUE'
+
+drupal_react_form.dynamic_get:
+  path: '/api/react-form/dynamic/{form_id}'
+  defaults:
+    _controller: '\Drupal\drupal_react_form\Controller\DynamicFormApiController::getDefinition'
+    _title: 'Dynamic Form Definition'
+  requirements:
+    _permission: 'access content'
+    _format: 'json'
+  methods: [GET]
+
+drupal_react_form.dynamic_submissions:
+  path: '/api/react-form/dynamic/{form_id}/submissions'
+  defaults:
+    _controller: '\Drupal\drupal_react_form\Controller\DynamicFormApiController::getSubmissions'
+    _title: 'Dynamic Form Submissions'
+  requirements:
+    _permission: 'access content'
+    _format: 'json'
+  methods: [GET]
+
+drupal_react_form.dynamic_submit:
+  path: '/api/react-form/dynamic/{form_id}/submit'
+  defaults:
+    _controller: '\Drupal\drupal_react_form\Controller\DynamicFormApiController::submitForm'
+    _title: 'Dynamic Form Submit'
+  requirements:
+    _permission: 'access content'
+    _csrf_request_header_token: 'TRUE'
+    _format: 'json'
+  methods: [POST]
+
 drupal_react_form.user_edit_page:
   path: '/drupal-react-form/user/{uid}/edit'
   defaults:

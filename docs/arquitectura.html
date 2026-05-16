@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>drupal_react_form — Arquitectura</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --bg2: #161b27;
+    --bg3: #1e2636;
+    --border: #2a3349;
+    --accent: #4f8ef7;
+    --accent2: #a78bfa;
+    --accent3: #34d399;
+    --accent4: #fb923c;
+    --accent5: #f472b6;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --php: #7b5ea7;
+    --react: #61dafb;
+    --json: #f6c90e;
+    --red: #f87171;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 17px;
+    line-height: 1.7;
+  }
+  a { color: var(--accent); text-decoration: none; }
+
+  /* ─── Layout ─── */
+  .page { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 6rem; }
+
+  /* ─── Hero ─── */
+  .hero {
+    text-align: center;
+    padding: 3rem 0 2rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 3rem;
+  }
+  .hero h1 { font-size: 2.8rem; font-weight: 700; letter-spacing: -0.5px; }
+  .hero h1 span { color: var(--accent); }
+  .hero p { color: var(--text2); margin-top: .6rem; font-size: 1.15rem; }
+  .badge {
+    display: inline-block; margin: .3rem .2rem;
+    padding: .2rem .7rem; border-radius: 999px; font-size: .75rem; font-weight: 600;
+  }
+  .badge-php   { background: #3d2a5a; color: #c084fc; border: 1px solid #7b5ea7; }
+  .badge-react { background: #0c2a35; color: #67e8f9; border: 1px solid #0891b2; }
+  .badge-drupal{ background: #1a2a1a; color: #86efac; border: 1px solid #16a34a; }
+
+  /* ─── Section ─── */
+  .section { margin-bottom: 3.5rem; }
+  .section-title {
+    font-size: 1.25rem; font-weight: 700; color: var(--accent);
+    text-transform: uppercase; letter-spacing: 1px;
+    margin-bottom: 1.2rem; padding-bottom: .5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: .6rem;
+  }
+  .section-title .num {
+    background: var(--accent); color: #000;
+    width: 26px; height: 26px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: .82rem; font-weight: 800; flex-shrink: 0;
+  }
+
+  /* ─── Cards ─── */
+  .card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 1.2rem 1.4rem;
+  }
+  .card-grid { display: grid; gap: 1rem; }
+  .card-grid.cols2 { grid-template-columns: 1fr 1fr; }
+  .card-grid.cols3 { grid-template-columns: 1fr 1fr 1fr; }
+  @media(max-width: 700px) {
+    .card-grid.cols2, .card-grid.cols3 { grid-template-columns: 1fr; }
+  }
+
+  /* ─── Code ─── */
+  pre, code {
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: .95rem;
+  }
+  pre {
+    background: #0a0e17; border: 1px solid var(--border);
+    border-radius: 8px; padding: 1.1rem 1.4rem;
+    overflow-x: auto; white-space: pre; color: #cbd5e1;
+  }
+  code { background: #1e2636; padding: .15rem .4rem; border-radius: 4px; color: var(--accent3); }
+
+  /* ─── SVG diagrams ─── */
+  .diagram-wrap {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.5rem;
+    overflow-x: auto; text-align: center;
+  }
+  svg text { font-family: 'Segoe UI', system-ui, sans-serif; }
+
+  /* ─── Flow steps ─── */
+  .flow { display: flex; flex-direction: column; gap: .6rem; }
+  .flow-step {
+    display: flex; align-items: flex-start; gap: .9rem;
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 8px; padding: .7rem 1rem;
+  }
+  .flow-step .step-num {
+    background: var(--accent); color: #000;
+    min-width: 24px; height: 24px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .72rem; font-weight: 800; margin-top: .05rem;
+  }
+  .flow-step .step-body { flex: 1; }
+  .flow-step .step-title { font-weight: 600; color: var(--text); font-size: 1rem; }
+  .flow-step .step-desc { color: var(--text2); font-size: .92rem; margin-top: .2rem; }
+  .flow-arrow { text-align: center; color: var(--text3); font-size: 1.2rem; }
+
+  /* ─── Component grid ─── */
+  .comp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: .5rem;
+  }
+  .comp-pill {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 6px; padding: .5rem .9rem;
+    font-size: .92rem; color: var(--text2);
+    display: flex; align-items: center; gap: .45rem;
+  }
+  .comp-pill .dot {
+    width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+  }
+  .dot-input  { background: var(--accent); }
+  .dot-choice { background: var(--accent2); }
+  .dot-file   { background: var(--accent4); }
+  .dot-action { background: var(--accent3); }
+  .dot-layout { background: var(--accent5); }
+  .dot-other  { background: var(--text3); }
+
+  /* ─── Table ─── */
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: .75rem 1rem; text-align: left; border-bottom: 1px solid var(--border); font-size: .97rem; }
+  th { color: var(--accent); font-weight: 600; font-size: .88rem; text-transform: uppercase; letter-spacing: .5px; background: var(--bg3); }
+  td code { font-size: .78rem; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #1a2133; }
+
+  /* ─── Legend ─── */
+  .legend { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; }
+  .legend-item { display: flex; align-items: center; gap: .4rem; font-size: .92rem; color: var(--text2); }
+  .legend-box { width: 12px; height: 12px; border-radius: 3px; }
+
+  /* ─── Tips ─── */
+  .tip {
+    background: #0f1f12; border-left: 3px solid var(--accent3);
+    border-radius: 0 8px 8px 0; padding: .85rem 1.1rem;
+    color: var(--text2); font-size: .95rem; margin-top: .8rem;
+  }
+  .tip strong { color: var(--accent3); }
+
+  .warn {
+    background: #1f1409; border-left: 3px solid var(--accent4);
+    border-radius: 0 8px 8px 0; padding: .85rem 1.1rem;
+    color: var(--text2); font-size: .95rem; margin-top: .8rem;
+  }
+  .warn strong { color: var(--accent4); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ══════════════════════════════════════════════════════════ HERO -->
+  <div class="hero">
+    <h1>drupal_<span>react</span>_form</h1>
+    <p>Arquitectura, flujo de datos y componentes del módulo</p>
+    <div style="margin-top:.8rem;">
+      <span class="badge badge-drupal">Drupal 11</span>
+      <span class="badge badge-php">PHP 8.3</span>
+      <span class="badge badge-react">React 18 + TypeScript</span>
+      <span class="badge badge-react" style="color:#a78bfa;border-color:#7c3aed;background:#1a1030">Vite</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ 1 · OVERVIEW -->
+  <div class="section">
+    <div class="section-title"><span class="num">1</span> Visión General</div>
+
+    <div class="diagram-wrap">
+      <svg viewBox="0 0 1350 390" width="100%" style="max-width:900px">
+        <g transform="scale(1.5)">
+        <!-- Layer backgrounds -->
+        <rect x="10"  y="20" width="250" height="220" rx="12" fill="#1a1230" stroke="#7b5ea7" stroke-width="1.5"/>
+        <rect x="320" y="20" width="260" height="220" rx="12" fill="#1a1a0a" stroke="#f6c90e" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <rect x="640" y="20" width="250" height="220" rx="12" fill="#051825" stroke="#61dafb" stroke-width="1.5"/>
+
+        <!-- Layer titles -->
+        <text x="135" y="48" text-anchor="middle" fill="#c084fc" font-size="12" font-weight="700" letter-spacing="1">PHP / DRUPAL</text>
+        <text x="450" y="48" text-anchor="middle" fill="#f6c90e" font-size="12" font-weight="700" letter-spacing="1">JSON CONTRACT</text>
+        <text x="765" y="48" text-anchor="middle" fill="#61dafb" font-size="12" font-weight="700" letter-spacing="1">REACT / BROWSER</text>
+
+        <!-- PHP boxes -->
+        <rect x="30"  y="65"  width="210" height="36" rx="6" fill="#2d1f4a" stroke="#7b5ea7"/>
+        <text x="135" y="87"  text-anchor="middle" fill="#e2e8f0" font-size="11">Form API (PHP class)</text>
+
+        <rect x="30"  y="115" width="210" height="36" rx="6" fill="#2d1f4a" stroke="#7b5ea7"/>
+        <text x="135" y="133" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="600">FormSerializer</text>
+        <text x="135" y="148" text-anchor="middle" fill="#94a3b8" font-size="9">#type → type, #states → states…</text>
+
+        <rect x="30"  y="168" width="210" height="36" rx="6" fill="#2d1f4a" stroke="#7b5ea7"/>
+        <text x="135" y="186" text-anchor="middle" fill="#e2e8f0" font-size="11">ReactFormController</text>
+        <text x="135" y="200" text-anchor="middle" fill="#94a3b8" font-size="9">GET /api/react-form/{form_id}</text>
+
+        <!-- JSON box -->
+        <rect x="340" y="80" width="220" height="130" rx="8" fill="#1a1600" stroke="#f6c90e"/>
+        <text x="450" y="103" text-anchor="middle" fill="#f6c90e" font-size="11" font-weight="600">DrupalFormResponse</text>
+        <text x="360" y="125" fill="#94a3b8" font-size="10">  success: true</text>
+        <text x="360" y="142" fill="#94a3b8" font-size="10">  form_id: "…"</text>
+        <text x="360" y="159" fill="#94a3b8" font-size="10">  elements: {"{"}  </text>
+        <text x="360" y="173" fill="#64748b" font-size="10">    key: type, title, states…</text>
+        <text x="360" y="188" fill="#94a3b8" font-size="10">  {"}"}</text>
+
+        <!-- React boxes -->
+        <rect x="660" y="65"  width="210" height="36" rx="6" fill="#05253a" stroke="#61dafb"/>
+        <text x="765" y="83"  text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="600">index.tsx</text>
+        <text x="765" y="97"  text-anchor="middle" fill="#94a3b8" font-size="9">detecta [data-react-form] → routea</text>
+
+        <rect x="660" y="115" width="210" height="36" rx="6" fill="#05253a" stroke="#61dafb"/>
+        <text x="765" y="133" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="600">DrupalForm.tsx</text>
+        <text x="765" y="148" text-anchor="middle" fill="#94a3b8" font-size="9">fetch, state, submit</text>
+
+        <rect x="660" y="165" width="210" height="36" rx="6" fill="#05253a" stroke="#61dafb"/>
+        <text x="765" y="183" text-anchor="middle" fill="#e2e8f0" font-size="11">ElementRenderer + Components</text>
+        <text x="765" y="197" text-anchor="middle" fill="#94a3b8" font-size="9">elementTypeMap lookup + statesEngine</text>
+
+        <!-- Arrows PHP → JSON -->
+        <defs>
+          <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="#f6c90e"/>
+          </marker>
+          <marker id="arr2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="#61dafb"/>
+          </marker>
+          <marker id="arr3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="#f87171"/>
+          </marker>
+        </defs>
+        <line x1="241" y1="145" x2="338" y2="145" stroke="#f6c90e" stroke-width="2" marker-end="url(#arr)"/>
+        <text x="290" y="138" text-anchor="middle" fill="#f6c90e" font-size="9">JSON</text>
+
+        <!-- Arrows JSON → React -->
+        <line x1="561" y1="145" x2="658" y2="145" stroke="#61dafb" stroke-width="2" marker-end="url(#arr2)"/>
+        <text x="610" y="138" text-anchor="middle" fill="#61dafb" font-size="9">fetch()</text>
+
+        <!-- Submit arrow back -->
+        <path d="M765,202 Q765,240 450,240 Q260,240 135,210" fill="none" stroke="#f87171" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr3)"/>
+        <text x="450" y="252" text-anchor="middle" fill="#f87171" font-size="9">POST /submit → JSON {success, errors}</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ 2 · FLUJO GET -->
+  <div class="section">
+    <div class="section-title"><span class="num">2</span> Flujo de carga del formulario (GET)</div>
+
+    <div class="card-grid cols2">
+      <div>
+        <div class="flow">
+          <div class="flow-step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-title">Twig renderiza el mount point</div>
+              <div class="step-desc">El template Drupal incluye un <code>&lt;div data-react-form data-form-id="…"&gt;</code> y adjunta la librería <code>react-form-app</code>.</div>
+            </div>
+          </div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-title">index.tsx — detección y routing</div>
+              <div class="step-desc"><code>querySelectorAll('[data-react-form]')</code> itera los mounts. Según el patrón del <code>data-form-id</code> elige qué componente montar.</div>
+            </div>
+          </div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-title">DrupalForm — fetch definición</div>
+              <div class="step-desc"><code>GET /api/react-form/{form_id}?_format=json</code><br/>Si hay <code>data-form-definition</code> en el HTML, usa el JSON inline y no hace fetch.</div>
+            </div>
+          </div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-step">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <div class="step-title">ReactFormController → FormSerializer</div>
+              <div class="step-desc"><code>FormBuilderInterface::getForm($class)</code> construye el array de Form API. <code>FormSerializer</code> lo transforma en JSON (<code>#type</code>→<code>type</code>, <code>#states</code>→<code>states</code>, etc.) ordenado por <code>weight</code>.</div>
+            </div>
+          </div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-step">
+            <div class="step-num">5</div>
+            <div class="step-body">
+              <div class="step-title">DrupalForm — inicializa estado</div>
+              <div class="step-desc">Guarda <code>definition</code> en state. Recorre <code>elements</code> para construir <code>values</code> con <code>defaultValue</code> de cada campo.</div>
+            </div>
+          </div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-step">
+            <div class="step-num">6</div>
+            <div class="step-body">
+              <div class="step-title">Render: ElementRenderer por campo</div>
+              <div class="step-desc"><code>Object.entries(definition)</code> → <code>DrupalElementRenderer</code> → <code>statesEngine</code> → <code>elementTypeMap[type]</code> → componente React.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="diagram-wrap" style="padding:1rem;">
+          <svg viewBox="0 0 540 780" width="100%" style="max-width:360px">
+            <g transform="scale(1.5)">
+            <!-- Twig -->
+            <rect x="80" y="10" width="200" height="50" rx="8" fill="#1a2a1a" stroke="#16a34a"/>
+            <text x="180" y="32" text-anchor="middle" fill="#86efac" font-size="11" font-weight="700">Twig Template</text>
+            <text x="180" y="50" text-anchor="middle" fill="#64748b" font-size="9">data-react-form + library attach</text>
+
+            <!-- Arrow -->
+            <line x1="180" y1="62" x2="180" y2="82" stroke="#4f8ef7" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+            <!-- index.tsx -->
+            <rect x="60" y="84" width="240" height="55" rx="8" fill="#051825" stroke="#61dafb"/>
+            <text x="180" y="105" text-anchor="middle" fill="#67e8f9" font-size="11" font-weight="700">index.tsx</text>
+            <text x="180" y="120" text-anchor="middle" fill="#94a3b8" font-size="9">Drupal.x.Form.Y → DrupalForm</text>
+            <text x="180" y="133" text-anchor="middle" fill="#94a3b8" font-size="9">user:42 → UserEditForm | dynamic:x → …</text>
+
+            <!-- Arrow -->
+            <line x1="180" y1="141" x2="180" y2="161" stroke="#4f8ef7" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+            <!-- DrupalForm -->
+            <rect x="40" y="163" width="280" height="50" rx="8" fill="#051825" stroke="#61dafb"/>
+            <text x="180" y="184" text-anchor="middle" fill="#67e8f9" font-size="11" font-weight="700">DrupalForm.tsx</text>
+            <text x="180" y="200" text-anchor="middle" fill="#94a3b8" font-size="9">fetch() → useState(definition, values, errors)</text>
+
+            <!-- Arrow down to PHP -->
+            <line x1="180" y1="215" x2="180" y2="235" stroke="#f6c90e" stroke-width="1.5" marker-end="url(#arr)"/>
+            <text x="230" y="228" fill="#f6c90e" font-size="9">GET API</text>
+
+            <!-- PHP -->
+            <rect x="50" y="237" width="260" height="65" rx="8" fill="#1a1230" stroke="#7b5ea7"/>
+            <text x="180" y="258" text-anchor="middle" fill="#c084fc" font-size="11" font-weight="700">ReactFormController</text>
+            <text x="180" y="274" text-anchor="middle" fill="#94a3b8" font-size="9">→ FormSerializer.serialize($class)</text>
+            <text x="180" y="289" text-anchor="middle" fill="#94a3b8" font-size="9">→ FormBuilderInterface::getForm()</text>
+
+            <!-- JSON response -->
+            <line x1="180" y1="304" x2="180" y2="324" stroke="#f6c90e" stroke-width="1.5" marker-end="url(#arr)"/>
+            <text x="220" y="318" fill="#f6c90e" font-size="9">JSON</text>
+
+            <rect x="60" y="326" width="240" height="45" rx="8" fill="#1a1600" stroke="#f6c90e"/>
+            <text x="180" y="347" text-anchor="middle" fill="#fde68a" font-size="10" font-weight="600">{"{ success, form_id, elements }"}</text>
+            <text x="180" y="364" text-anchor="middle" fill="#94a3b8" font-size="9">elements: Record&lt;key, DrupalElement&gt;</text>
+
+            <!-- Arrow back up to DrupalForm -->
+            <line x1="180" y1="373" x2="180" y2="393" stroke="#61dafb" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+            <!-- Render -->
+            <rect x="40" y="395" width="280" height="55" rx="8" fill="#051825" stroke="#61dafb"/>
+            <text x="180" y="416" text-anchor="middle" fill="#67e8f9" font-size="11" font-weight="700">DrupalElementRenderer</text>
+            <text x="180" y="431" text-anchor="middle" fill="#94a3b8" font-size="9">statesEngine → elementTypeMap</text>
+            <text x="180" y="446" text-anchor="middle" fill="#94a3b8" font-size="9">→ &lt;TextField /&gt; | &lt;SelectField /&gt; | …</text>
+
+            <!-- Arrow to DOM -->
+            <line x1="180" y1="452" x2="180" y2="472" stroke="#34d399" stroke-width="1.5" marker-end="url(#arr2)"/>
+            <rect x="100" y="474" width="160" height="34" rx="6" fill="#0a1f14" stroke="#34d399"/>
+            <text x="180" y="497" text-anchor="middle" fill="#86efac" font-size="11" font-weight="600">DOM renderizado</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ 3 · ROUTING index.tsx -->
+  <div class="section">
+    <div class="section-title"><span class="num">3</span> Routing del entry point (index.tsx)</div>
+
+    <div class="diagram-wrap">
+      <svg viewBox="0 0 1290 330" width="100%" style="max-width:860px">
+        <g transform="scale(1.5)">
+        <!-- Start -->
+        <rect x="340" y="10" width="180" height="40" rx="20" fill="#1e2636" stroke="#4f8ef7" stroke-width="2"/>
+        <text x="430" y="34" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">data-form-id="…"</text>
+
+        <!-- Diamond 1 -->
+        <polygon points="430,70 510,105 430,140 350,105" fill="#1a1230" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="430" y="100" text-anchor="middle" fill="#c084fc" font-size="10">user:\d+</text>
+        <text x="430" y="115" text-anchor="middle" fill="#94a3b8" font-size="9">?</text>
+
+        <!-- Yes 1 → UserEditForm -->
+        <line x1="510" y1="105" x2="600" y2="105" stroke="#34d399" stroke-width="1.5" marker-end="url(#arr2)"/>
+        <text x="555" y="98" text-anchor="middle" fill="#34d399" font-size="9">sí</text>
+        <rect x="602" y="83" width="140" height="44" rx="8" fill="#0a1f14" stroke="#34d399"/>
+        <text x="672" y="101" text-anchor="middle" fill="#86efac" font-size="11" font-weight="600">UserEditForm</text>
+        <text x="672" y="118" text-anchor="middle" fill="#64748b" font-size="9">uid prop → /api/react-form/user/{uid}</text>
+
+        <!-- No 1 → Diamond 2 -->
+        <line x1="430" y1="140" x2="430" y2="160" stroke="#4f8ef7" stroke-width="1.5" marker-end="url(#arr2)"/>
+        <text x="415" y="155" fill="#64748b" font-size="9">no</text>
+
+        <!-- Diamond 2 -->
+        <polygon points="430,162 510,197 430,232 350,197" fill="#1a1230" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="430" y="192" text-anchor="middle" fill="#c084fc" font-size="10">dynamic:x</text>
+        <text x="430" y="207" text-anchor="middle" fill="#94a3b8" font-size="9">?</text>
+
+        <!-- Yes 2 → Registry check -->
+        <line x1="510" y1="197" x2="560" y2="197" stroke="#34d399" stroke-width="1.5"/>
+        <text x="535" y="190" text-anchor="middle" fill="#34d399" font-size="9">sí</text>
+
+        <!-- Registry diamond -->
+        <polygon points="600,165 650,197 600,229 550,197" fill="#1a1230" stroke="#fb923c" stroke-width="1.5"/>
+        <text x="600" y="192" text-anchor="middle" fill="#fb923c" font-size="9">en</text>
+        <text x="600" y="205" text-anchor="middle" fill="#fb923c" font-size="9">REGISTRY</text>
+
+        <!-- In registry → Dedicated -->
+        <line x1="650" y1="197" x2="702" y2="197" stroke="#fb923c" stroke-width="1.5" marker-end="url(#arr2)"/>
+        <text x="676" y="190" text-anchor="middle" fill="#fb923c" font-size="9">sí</text>
+        <rect x="704" y="178" width="140" height="38" rx="8" fill="#1f1409" stroke="#fb923c"/>
+        <text x="774" y="196" text-anchor="middle" fill="#fdba74" font-size="11" font-weight="600">Componente dedicado</text>
+        <text x="774" y="210" text-anchor="middle" fill="#64748b" font-size="9">DYNAMIC_REGISTRY[id]</text>
+
+        <!-- Not in registry → Generic dynamic -->
+        <line x1="600" y1="229" x2="600" y2="248" stroke="#4f8ef7" stroke-width="1.5"/>
+        <text x="584" y="244" fill="#64748b" font-size="9">no</text>
+
+        <!-- No dynamic → DrupalForm generic -->
+        <line x1="430" y1="232" x2="430" y2="248" stroke="#4f8ef7" stroke-width="1.5"/>
+        <text x="414" y="244" fill="#64748b" font-size="9">no</text>
+
+        <!-- Both converge to DrupalForm -->
+        <rect x="330" y="250" width="360" height="40" rx="8" fill="#051825" stroke="#61dafb"/>
+        <text x="510" y="270" text-anchor="middle" fill="#67e8f9" font-size="12" font-weight="700">DrupalForm genérico</text>
+        <text x="510" y="283" text-anchor="middle" fill="#64748b" font-size="9">/api/react-form/{id} o /api/react-form/dynamic/{id}</text>
+
+        <line x1="430" y1="248" x2="430" y2="250" stroke="#4f8ef7" stroke-width="1.5"/>
+        <line x1="600" y1="248" x2="600" y2="269" stroke="#4f8ef7" stroke-width="1.5"/>
+        <line x1="600" y1="269" x2="692" y2="269" stroke="#4f8ef7" stroke-width="1.5"/>
+
+        <!-- Top arrow -->
+        <line x1="430" y1="50" x2="430" y2="68" stroke="#4f8ef7" stroke-width="1.5" marker-end="url(#arr2)"/>
+        </g>
+      </svg>
+    </div>
+
+    <div class="tip">
+      <strong>Cómo elegir el patrón:</strong> <code>Drupal.mi_modulo.Form.MiForm</code> para cualquier Form API class, <code>user:42</code> para edición de usuario, <code>dynamic:mi_form</code> para formularios creados desde el admin de Drupal sin escribir PHP.
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ 4 · STATES ENGINE -->
+  <div class="section">
+    <div class="section-title"><span class="num">4</span> States Engine — visibilidad y comportamiento dinámico</div>
+
+    <div class="card-grid cols2">
+      <div class="card">
+        <p style="color:var(--text2);font-size:.85rem;margin-bottom:.8rem;">El <strong style="color:var(--text)">statesEngine</strong> replica <code>#states</code> de Drupal Form API en React. Se evalúa en cada render, por lo que cualquier cambio en <code>formValues</code> actualiza instantáneamente la visibilidad, requerimiento y estado de cada campo.</p>
+
+        <pre><span style="color:#94a3b8">// Ejemplo: campo visible sólo si checkbox está marcado</span>
+<span style="color:#f6c90e">states</span>: {
+  visible: [
+    { field: <span style="color:#86efac">"acepta_terminos"</span>, condition: <span style="color:#86efac">"checked"</span> }
+  ],
+  required: [
+    { field: <span style="color:#86efac">"acepta_terminos"</span>, condition: <span style="color:#86efac">"checked"</span> }
+  ]
+}</pre>
+
+        <div style="margin-top:1rem;">
+          <table>
+            <thead><tr><th>Condición</th><th>Evalúa como true si…</th></tr></thead>
+            <tbody>
+              <tr><td><code>value</code></td><td>campo === valor exacto</td></tr>
+              <tr><td><code>checked</code></td><td>campo es <code>true</code> / <code>1</code></td></tr>
+              <tr><td><code>unchecked</code></td><td>campo es falsy o vacío</td></tr>
+              <tr><td><code>empty</code></td><td>campo es <code>null</code> / <code>""</code></td></tr>
+              <tr><td><code>filled</code></td><td>campo tiene cualquier valor</td></tr>
+              <tr><td><code>pattern</code></td><td>campo matchea regex</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="diagram-wrap" style="padding:1rem;">
+        <svg viewBox="0 0 510 570" width="100%" style="max-width:340px">
+          <g transform="scale(1.5)">
+          <!-- Input -->
+          <rect x="100" y="10" width="140" height="38" rx="8" fill="#051825" stroke="#61dafb"/>
+          <text x="170" y="27" text-anchor="middle" fill="#67e8f9" font-size="11" font-weight="600">formValues</text>
+          <text x="170" y="43" text-anchor="middle" fill="#64748b" font-size="9">estado global del formulario</text>
+
+          <line x1="170" y1="50" x2="170" y2="68" stroke="#4f8ef7" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+          <rect x="60" y="70" width="220" height="38" rx="8" fill="#1a1230" stroke="#a78bfa"/>
+          <text x="170" y="87" text-anchor="middle" fill="#c084fc" font-size="11" font-weight="600">evaluateStates(element.states, values)</text>
+          <text x="170" y="102" text-anchor="middle" fill="#64748b" font-size="9">statesEngine.ts</text>
+
+          <line x1="170" y1="110" x2="170" y2="128" stroke="#4f8ef7" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+          <!-- EvaluatedStates box -->
+          <rect x="50" y="130" width="240" height="120" rx="8" fill="#1a1600" stroke="#f6c90e"/>
+          <text x="170" y="150" text-anchor="middle" fill="#fde68a" font-size="11" font-weight="600">EvaluatedStates</text>
+          <text x="70" y="170" fill="#94a3b8" font-size="10">  visible:  <tspan fill="#34d399">boolean</tspan></text>
+          <text x="70" y="187" fill="#94a3b8" font-size="10">  required: <tspan fill="#34d399">boolean</tspan></text>
+          <text x="70" y="204" fill="#94a3b8" font-size="10">  disabled: <tspan fill="#34d399">boolean</tspan></text>
+          <text x="70" y="221" fill="#94a3b8" font-size="10">  expanded: <tspan fill="#34d399">boolean</tspan></text>
+          <text x="70" y="238" fill="#94a3b8" font-size="10">  checked:  <tspan fill="#34d399">boolean</tspan></text>
+
+          <line x1="170" y1="252" x2="170" y2="270" stroke="#4f8ef7" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+          <!-- Decision: visible? -->
+          <polygon points="170,272 220,295 170,318 120,295" fill="#1a1230" stroke="#f87171" stroke-width="1.5"/>
+          <text x="170" y="292" text-anchor="middle" fill="#fca5a5" font-size="10">visible</text>
+          <text x="170" y="307" text-anchor="middle" fill="#fca5a5" font-size="9">?</text>
+
+          <!-- No: null -->
+          <line x1="120" y1="295" x2="70" y2="295" stroke="#f87171" stroke-width="1.5" marker-end="url(#arr3)"/>
+          <text x="95" y="288" text-anchor="middle" fill="#f87171" font-size="9">no</text>
+          <rect x="10" y="280" width="58" height="28" rx="6" fill="#1f0a0a" stroke="#f87171"/>
+          <text x="39" y="299" text-anchor="middle" fill="#f87171" font-size="10">return null</text>
+
+          <!-- Yes: render -->
+          <line x1="170" y1="318" x2="170" y2="338" stroke="#34d399" stroke-width="1.5" marker-end="url(#arr2)"/>
+          <text x="154" y="334" fill="#34d399" font-size="9">sí</text>
+          <rect x="80" y="340" width="180" height="30" rx="6" fill="#0a1f14" stroke="#34d399"/>
+          <text x="170" y="360" text-anchor="middle" fill="#86efac" font-size="11">render componente</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ 5 · SUBMIT -->
+  <div class="section">
+    <div class="section-title"><span class="num">5</span> Flujo de envío (POST)</div>
+
+    <div class="flow">
+      <div class="flow-step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Usuario envía el formulario</div>
+          <div class="step-desc"><code>handleSubmit</code> en <code>DrupalForm.tsx</code> captura el evento, llama <code>e.preventDefault()</code> y activa <code>submitting: true</code>.</div>
+        </div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Obtiene CSRF token</div>
+          <div class="step-desc"><code>GET /session/token</code> → string plano. Se envía como header <code>X-CSRF-Token</code>. Drupal valida con <code>_csrf_request_header_token: TRUE</code> en routing.yml.</div>
+        </div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">POST al endpoint de submit</div>
+          <div class="step-desc"><code>POST /api/react-form/{form_id}/submit?_format=json</code><br/>Body: <code>JSON.stringify(values)</code> con el estado actual de todos los campos.</div>
+        </div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-title">Controlador PHP procesa la respuesta</div>
+          <div class="step-desc">Retorna <code>{"{ success: true, messages }"}</code> o <code>{"{ success: false, errors: {field: msg} }"}</code>.</div>
+        </div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <div class="step-title">React actualiza UI</div>
+          <div class="step-desc">Si <code>success</code>: muestra mensaje de éxito, llama <code>onSubmitSuccess?.(data)</code>.<br/>Si <code>errors</code>: <code>setErrors(data.errors)</code> → los campos muestran sus mensajes de error.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ 6 · COMPONENTS -->
+  <div class="section">
+    <div class="section-title"><span class="num">6</span> Componentes disponibles (elementTypeMap)</div>
+
+    <div class="legend">
+      <div class="legend-item"><div class="legend-box" style="background:var(--accent)"></div>Texto / Input</div>
+      <div class="legend-item"><div class="legend-box" style="background:var(--accent2)"></div>Selección</div>
+      <div class="legend-item"><div class="legend-box" style="background:var(--accent4)"></div>Archivos</div>
+      <div class="legend-item"><div class="legend-box" style="background:var(--accent3)"></div>Acción</div>
+      <div class="legend-item"><div class="legend-box" style="background:var(--accent5)"></div>Layout</div>
+      <div class="legend-item"><div class="legend-box" style="background:var(--text3)"></div>Otro</div>
+    </div>
+
+    <div class="comp-grid">
+      <div class="comp-pill"><span class="dot dot-input"></span>textfield</div>
+      <div class="comp-pill"><span class="dot dot-input"></span>email</div>
+      <div class="comp-pill"><span class="dot dot-input"></span>password</div>
+      <div class="comp-pill"><span class="dot dot-input"></span>password_confirm</div>
+      <div class="comp-pill"><span class="dot dot-input"></span>textarea</div>
+      <div class="comp-pill"><span class="dot dot-input"></span>number</div>
+      <div class="comp-pill"><span class="dot dot-input"></span>tel</div>
+      <div class="comp-pill"><span class="dot dot-input"></span>url</div>
+      <div class="comp-pill"><span class="dot dot-input"></span>color</div>
+      <div class="comp-pill"><span class="dot dot-input"></span>range</div>
+      <div class="comp-pill"><span class="dot dot-input"></span>search</div>
+      <div class="comp-pill"><span class="dot dot-input"></span>date</div>
+      <div class="comp-pill"><span class="dot dot-input"></span>datetime</div>
+      <div class="comp-pill"><span class="dot dot-input"></span>datelist</div>
+      <div class="comp-pill"><span class="dot dot-choice"></span>select</div>
+      <div class="comp-pill"><span class="dot dot-choice"></span>checkbox</div>
+      <div class="comp-pill"><span class="dot dot-choice"></span>checkboxes</div>
+      <div class="comp-pill"><span class="dot dot-choice"></span>radio</div>
+      <div class="comp-pill"><span class="dot dot-choice"></span>radios</div>
+      <div class="comp-pill"><span class="dot dot-file"></span>file</div>
+      <div class="comp-pill"><span class="dot dot-file"></span>managed_file</div>
+      <div class="comp-pill"><span class="dot dot-action"></span>submit</div>
+      <div class="comp-pill"><span class="dot dot-action"></span>button</div>
+      <div class="comp-pill"><span class="dot dot-layout"></span>fieldset</div>
+      <div class="comp-pill"><span class="dot dot-layout"></span>details</div>
+      <div class="comp-pill"><span class="dot dot-layout"></span>container</div>
+      <div class="comp-pill"><span class="dot dot-other"></span>item</div>
+      <div class="comp-pill"><span class="dot dot-other"></span>hidden</div>
+      <div class="comp-pill"><span class="dot dot-other"></span>entity_autocomplete</div>
+    </div>
+
+    <div class="tip" style="margin-top:1rem;">
+      <strong>Tipo desconocido:</strong> Si el JSON devuelve un <code>type</code> que no está en el mapa, <code>DrupalElementRenderer</code> monta un <code>FallbackField</code> (input text) y loguea un warning en consola. Nunca rompe el formulario.
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ 7 · API ROUTES -->
+  <div class="section">
+    <div class="section-title"><span class="num">7</span> Endpoints API</div>
+
+    <div class="card">
+      <table>
+        <thead>
+          <tr><th>Método</th><th>URL</th><th>Descripción</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span style="color:var(--accent3)">GET</span></td>
+            <td><code>/api/react-form/{form_id}?_format=json</code></td>
+            <td>Serializa cualquier Form API class a JSON</td>
+          </tr>
+          <tr>
+            <td><span style="color:var(--accent4)">POST</span></td>
+            <td><code>/api/react-form/{form_id}/submit?_format=json</code></td>
+            <td>Recibe valores del formulario</td>
+          </tr>
+          <tr>
+            <td><span style="color:var(--accent3)">GET</span></td>
+            <td><code>/api/react-form/dynamic/{form_id}?_format=json</code></td>
+            <td>Formulario creado desde el admin Drupal</td>
+          </tr>
+          <tr>
+            <td><span style="color:var(--accent4)">POST</span></td>
+            <td><code>/api/react-form/dynamic/{form_id}/submit?_format=json</code></td>
+            <td>Submit de formulario dinámico</td>
+          </tr>
+          <tr>
+            <td><span style="color:var(--accent3)">GET</span></td>
+            <td><code>/api/react-form/user/{uid}?_format=json</code></td>
+            <td>Definición del formulario de perfil de usuario</td>
+          </tr>
+          <tr>
+            <td><span style="color:var(--accent4)">POST</span></td>
+            <td><code>/api/react-form/user/{uid}/submit?_format=json</code></td>
+            <td>Guarda cambios de perfil</td>
+          </tr>
+          <tr>
+            <td><span style="color:var(--accent4)">POST</span></td>
+            <td><code>/api/react-form/user/{uid}/upload/picture</code></td>
+            <td>Sube foto de perfil</td>
+          </tr>
+          <tr>
+            <td><span style="color:var(--accent3)">GET</span></td>
+            <td><code>/session/token</code></td>
+            <td>CSRF token (Drupal core) — requerido para POST</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ 8 · USAGE -->
+  <div class="section">
+    <div class="section-title"><span class="num">8</span> Cómo usar el módulo</div>
+
+    <div class="card-grid cols2">
+      <div>
+        <p style="color:var(--text2);font-size:.85rem;margin-bottom:.7rem;"><strong style="color:var(--text)">Opción A — Twig template</strong><br/>Adjuntá la librería e incluí el div con el <code>data-form-id</code> correcto:</p>
+        <pre><span style="color:#64748b">{# Template Twig #}</span>
+&lt;<span style="color:#61dafb">div</span>
+  <span style="color:#f6c90e">data-react-form</span>
+  <span style="color:#f6c90e">data-form-id</span>=<span style="color:#86efac">"Drupal.mi_modulo.Form.MiForm"</span>
+&gt;&lt;/div&gt;
+{{ attach_library(<span style="color:#86efac">'drupal_react_form/react-form-app'</span>) }}</pre>
+      </div>
+
+      <div>
+        <p style="color:var(--text2);font-size:.85rem;margin-bottom:.7rem;"><strong style="color:var(--text)">Opción B — JSON inline</strong><br/>Para evitar el fetch, pasá la definición serializada directamente en el HTML:</p>
+        <pre>&lt;<span style="color:#61dafb">div</span>
+  <span style="color:#f6c90e">data-react-form</span>
+  <span style="color:#f6c90e">data-form-id</span>=<span style="color:#86efac">"mi_form"</span>
+  <span style="color:#f6c90e">data-form-definition</span>=<span style="color:#86efac">'{{ definition|json_encode }}'</span>
+&gt;&lt;/div&gt;</pre>
+      </div>
+
+      <div>
+        <p style="color:var(--text2);font-size:.85rem;margin-bottom:.7rem;"><strong style="color:var(--text)">Opción C — Formulario dinámico (sin PHP)</strong><br/>Creado desde <code>/admin/drupal-react-form/forms</code>:</p>
+        <pre>&lt;<span style="color:#61dafb">div</span>
+  <span style="color:#f6c90e">data-react-form</span>
+  <span style="color:#f6c90e">data-form-id</span>=<span style="color:#86efac">"dynamic:mi_form_id"</span>
+&gt;&lt;/div&gt;</pre>
+      </div>
+
+      <div>
+        <p style="color:var(--text2);font-size:.85rem;margin-bottom:.7rem;"><strong style="color:var(--text)">Opción D — Perfil de usuario</strong></p>
+        <pre>&lt;<span style="color:#61dafb">div</span>
+  <span style="color:#f6c90e">data-react-form</span>
+  <span style="color:#f6c90e">data-form-id</span>=<span style="color:#86efac">"user:{{ user.id }}"</span>
+&gt;&lt;/div&gt;</pre>
+        <div class="tip" style="margin-top:.5rem;font-size:.8rem;">
+          <strong>URLs de demo:</strong><br>
+          <code>/drupal-react-form/demo</code><br>
+          <code>/drupal-react-form/user/{uid}/edit</code>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ 9 · FORMSERIALIZER -->
+  <div class="section">
+    <div class="section-title"><span class="num">9</span> FormSerializer — traducción PHP → JSON</div>
+
+    <div class="diagram-wrap">
+      <svg viewBox="0 0 1230 300" width="100%" style="max-width:820px">
+        <g transform="scale(1.5)">
+        <!-- PHP side -->
+        <rect x="10" y="30" width="300" height="140" rx="10" fill="#1a1230" stroke="#7b5ea7"/>
+        <text x="160" y="55" text-anchor="middle" fill="#c084fc" font-size="11" font-weight="700">Drupal Form API Array (PHP)</text>
+
+        <text x="30" y="80"  fill="#94a3b8" font-size="10">#type: 'textfield'</text>
+        <text x="30" y="96"  fill="#94a3b8" font-size="10">#title: t('Nombre')</text>
+        <text x="30" y="112" fill="#94a3b8" font-size="10">#required: TRUE</text>
+        <text x="30" y="128" fill="#94a3b8" font-size="10">#default_value: 'Andres'</text>
+        <text x="30" y="144" fill="#94a3b8" font-size="10">#states: ['visible' => ...]</text>
+        <text x="30" y="160" fill="#64748b" font-size="10">#weight: 10</text>
+
+        <!-- Arrow -->
+        <rect x="320" y="75" width="180" height="50" rx="8" fill="#1a1600" stroke="#f6c90e"/>
+        <text x="410" y="98" text-anchor="middle" fill="#fde68a" font-size="11" font-weight="700">FormSerializer</text>
+        <text x="410" y="114" text-anchor="middle" fill="#94a3b8" font-size="9">serializeElement() + serializeStates()</text>
+        <line x1="312" y1="100" x2="318" y2="100" stroke="#f6c90e" stroke-width="2" marker-end="url(#arr)"/>
+        <line x1="502" y1="100" x2="508" y2="100" stroke="#f6c90e" stroke-width="2" marker-end="url(#arr)"/>
+
+        <!-- JSON side -->
+        <rect x="510" y="30" width="300" height="140" rx="10" fill="#051825" stroke="#61dafb"/>
+        <text x="660" y="55" text-anchor="middle" fill="#67e8f9" font-size="11" font-weight="700">DrupalElement (JSON / TypeScript)</text>
+
+        <text x="530" y="80"  fill="#94a3b8" font-size="10">type: <tspan fill="#86efac">"textfield"</tspan></text>
+        <text x="530" y="96"  fill="#94a3b8" font-size="10">title: <tspan fill="#86efac">"Nombre"</tspan></text>
+        <text x="530" y="112" fill="#94a3b8" font-size="10">required: <tspan fill="#34d399">true</tspan></text>
+        <text x="530" y="128" fill="#94a3b8" font-size="10">defaultValue: <tspan fill="#86efac">"Andres"</tspan></text>
+        <text x="530" y="144" fill="#94a3b8" font-size="10">states: {"{ visible: [{field,condition}] }"}</text>
+        <text x="530" y="160" fill="#94a3b8" font-size="10">weight: <tspan fill="#67e8f9">10</tspan></text>
+
+        <!-- Nota keys -->
+        <text x="410" y="165" text-anchor="middle" fill="#64748b" font-size="9">#key → key (quita el #)</text>
+        <text x="410" y="178" text-anchor="middle" fill="#64748b" font-size="9">null / vacíos → omitidos (array_filter)</text>
+        </g>
+      </svg>
+    </div>
+
+    <div class="warn">
+      <strong>Reglas del serializer:</strong> Los keys que empiezan con <code>#</code> o <code>_</code> son ignorados. Sólo se serializa si el elemento tiene <code>#type</code>. Elementos de <code>fieldset</code>, <code>details</code> y <code>container</code> incluyen sus hijos en el campo <code>children</code>. El resultado se ordena por <code>weight</code> antes de devolver.
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ 10 · TROUBLESHOOTING -->
+  <div class="section">
+    <div class="section-title"><span class="num">10</span> Troubleshooting conocido</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Síntoma</th><th>Causa</th><th>Fix</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Página en blanco</td>
+            <td><code>process.env.NODE_ENV</code> no definido en vite.config</td>
+            <td>Agregar <code>define: {'{"process.env.NODE_ENV": JSON.stringify("production")'}</code></td>
+          </tr>
+          <tr>
+            <td>HTTP 400 en la API</td>
+            <td>Browser convierte <code>%5C</code> → <code>/</code> en URLs</td>
+            <td>Usar puntos en <code>data-form-id</code>, no backslashes</td>
+          </tr>
+          <tr>
+            <td>HTTP 403 "Invalid CSRF token"</td>
+            <td>Validación manual con seed incorrecto</td>
+            <td>Usar <code>_csrf_request_header_token: 'TRUE'</code> en routing.yml</td>
+          </tr>
+          <tr>
+            <td>HTTP 500 user_roles()</td>
+            <td>Función global no disponible</td>
+            <td>Usar <code>$this->entityTypeManager()->getStorage('user_role')</code></td>
+          </tr>
+          <tr>
+            <td>PHP sigue con error tras fix</td>
+            <td>OPcache tiene versión vieja</td>
+            <td><code>lando drush ev "opcache_reset();"</code> + <code>lando drush cr</code></td>
+          </tr>
+          <tr>
+            <td>TypeError: private readonly en rebuild</td>
+            <td><code>DependencySerializationTrait</code> incompatible</td>
+            <td>Cambiar a <code>private</code> sin <code>readonly</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div style="text-align:center;color:var(--text3);font-size:.78rem;padding-top:2rem;border-top:1px solid var(--border);">
+    drupal_react_form · Drupal 11 + React 18 + Vite · generado 2026-05-16
+  </div>
+
+</div>
+</body>
+</html>

@@ -7,16 +7,17 @@ Módulo Drupal 11 que expone formularios como JSON y los renderiza con React, da
 ## Índice
 
 1. [Cómo funciona](#cómo-funciona)
-2. [Tipos de formularios](#tipos-de-formularios)
-3. [Modo 1 — Genérico automático](#modo-1--genérico-automático)
-4. [Modo 2 — Componente dedicado con markup custom](#modo-2--componente-dedicado-con-markup-custom)
-5. [Formularios dinámicos desde el admin](#formularios-dinámicos-desde-el-admin)
-6. [SDC Component en el tema](#sdc-component-en-el-tema)
-7. [Componentes de campo disponibles](#componentes-de-campo-disponibles)
-8. [Diseño y CSS por componente](#diseño-y-css-por-componente)
-9. [API endpoints](#api-endpoints)
-10. [Build del bundle](#build-del-bundle)
-11. [Comandos útiles](#comandos-útiles)
+2. [Flujo de datos detallado](#flujo-de-datos-detallado)
+3. [Tipos de formularios](#tipos-de-formularios)
+4. [Modo 1 — Genérico automático](#modo-1--genérico-automático)
+5. [Modo 2 — Componente dedicado con markup custom](#modo-2--componente-dedicado-con-markup-custom)
+6. [Formularios dinámicos desde el admin](#formularios-dinámicos-desde-el-admin)
+7. [SDC Component en el tema](#sdc-component-en-el-tema)
+8. [Componentes de campo disponibles](#componentes-de-campo-disponibles)
+9. [Diseño y CSS por componente](#diseño-y-css-por-componente)
+10. [API endpoints](#api-endpoints)
+11. [Build del bundle](#build-del-bundle)
+12. [Comandos útiles](#comandos-útiles)
 
 ---
 
@@ -38,6 +39,136 @@ Drupal Form API / Admin Builder
 ```
 
 El bundle `dist/react-form.js` se carga una sola vez. Escanea todos los `[data-react-form]` de la página y monta el componente correspondiente en cada uno.
+
+---
+
+## Flujo de datos detallado
+
+Este es el viaje completo de los datos, desde la base de datos hasta el HTML en el browser.
+
+### 1. Drupal serializa la definición
+
+```
+Tabla drupal_react_forms (o clase PHP Form API)
+         │
+         │  DynamicFormStorage::load()  →  array PHP
+         │  DynamicFormApiController::getDefinition()
+         ▼
+GET /api/react-form/dynamic/[nombre-form-custom]?_format=json
+```
+
+La respuesta JSON tiene esta forma:
+
+```json
+{
+  "success": true,
+  "elements": {
+    "[campo_1]": {
+      "key":      "[campo_1]",
+      "type":     "select",
+      "title":    "Categoría",
+      "required": false,
+      "options":  [
+        { "value": "opcion_a", "label": "Opción A" },
+        { "value": "opcion_b", "label": "Opción B" }
+      ],
+      "weight": 0
+    },
+    "[campo_2]": {
+      "key":   "[campo_2]",
+      "type":  "textfield",
+      "title": "Autor",
+      "weight": 1
+    }
+  }
+}
+```
+
+### 2. React recibe el contrato y lo hidrata
+
+```tsx
+// useEffect en [NombreFormCustom].tsx
+fetch('/api/react-form/dynamic/[nombre-form-custom]?_format=json')
+  .then(r => r.json())
+  .then(data => {
+    setDefinition(data.elements);   // el contrato completo
+    setValues(defaultValues);       // valores iniciales (último guardado o vacíos)
+  });
+```
+
+`definition` = el objeto `elements` completo. Cada campo component recibe **solo su slice**:
+
+```tsx
+<SelectField
+  name="[campo_1]"
+  element={definition['[campo_1]']}  // { type, title, options, required, ... }
+  formValues={values}                // estado actual del form completo
+  onChange={(v) => handleChange('[campo_1]', v)}
+  error={errors['[campo_1]']}
+/>
+```
+
+`SelectField` lee `element.options` para el `<select>`, `element.title` para el label, `element.required` para el asterisco. **El componente nunca sabe de dónde vino el dato — solo consume el contrato.**
+
+### 3. El usuario interactúa
+
+Cada vez que el usuario toca un campo, `onChange` actualiza el estado local de React:
+
+```tsx
+const handleChange = (name: string, value: unknown) => {
+  setValues(prev => ({ ...prev, [name]: value }));
+};
+
+// Después de completar el form, values queda:
+// { '[campo_1]': 'opcion_a', '[campo_2]': 'Juan' }
+```
+
+### 4. Submit: React → Drupal
+
+```tsx
+// 1. Obtener CSRF token
+const csrf = await fetch('/session/token').then(r => r.text());
+
+// 2. Postear los valores como JSON plano
+POST /api/react-form/dynamic/[nombre-form-custom]/submit?_format=json
+Headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf }
+Body:     { "[campo_1]": "opcion_a", "[campo_2]": "Juan" }
+```
+
+```php
+// DynamicFormApiController::submitForm() guarda en la base:
+INSERT INTO drupal_react_form_submissions
+  (form_id,               data,                              uid,  created)
+  ('[nombre-form-custom]', '{"[campo_1]":"opcion_a",...}',   1,    1747...)
+```
+
+### 5. El panel "Último guardado" lee desde la base
+
+```
+GET /api/react-form/dynamic/[nombre-form-custom]/submissions?_format=json
+         │
+         │  SELECT * FROM drupal_react_form_submissions
+         │  WHERE form_id = '[nombre-form-custom]'
+         │  ORDER BY created DESC LIMIT 20
+         ▼
+[{ id, data: { campo_1: "...", campo_2: "..." }, uid, created }]
+         │
+         ▼
+React muestra el último registro en el panel lateral
+```
+
+### Resumen del contrato
+
+```
+Drupal                          React
+──────────────────────────────────────────────
+Provee: qué campos hay          Consume: el contrato
+        qué tipo son                     lo transforma en HTML
+        qué opciones tienen              gestiona el estado local
+        qué reglas tienen                valida en el browser
+        valores por defecto              postea JSON en submit
+──────────────────────────────────────────────
+```
 
 ---
 

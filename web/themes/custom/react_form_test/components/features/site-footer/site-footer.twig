@@ -1,0 +1,13 @@
+{# Componente SDC: site-footer #}
+
+{% set footer_attributes = (attributes is defined ? attributes : create_attribute()).addClass([
+  'site-footer',
+]) %}
+
+<footer{{ footer_attributes }} role="contentinfo">
+  <div class="region region-footer site-footer-inner">
+    {% if content is defined %}
+      {{ content }}
+    {% endif %}
+  </div>
+</footer>

@@ -1,0 +1,48 @@
+{#
+  SDC component: heading
+  Usage: {{ include('react_form_test:heading', { variant: 'h3', text: 'Title', size: 'xl', mobile_size: 'lg', weight: 'bold' }, false) }}
+#}
+
+{% set resolved_variant = variant|default('h2') %}
+
+{% set base_classes = ['heading', resolved_variant] %}
+{% set extra = className|default(class_name|default('')) %}
+{% set extra_list = extra ? extra|split(' ') : [] %}
+{% set classes = base_classes|merge(extra_list|filter(v => v is not empty)) %}
+
+{% set heading_attributes = (attributes is defined ? attributes : create_attribute()).addClass(classes) %}
+
+{% set size_value = size|default('') %}
+{% set size_token = size_value|replace({'size-': ''}) %}
+{% set mobile_size_value = mobile_size|default('') %}
+{% set mobile_size_token = mobile_size_value|replace({'size-': ''}) %}
+
+{% set styles = [] %}
+{% if size_token %}
+ {% set styles = styles|merge([
+    '--heading-font-size: var(--font-size-' ~ size_token ~ ')',
+    '--heading-line-height: var(--font-line-height-' ~ size_token ~ ')'
+  ]) %}
+{% endif %}
+{% if mobile_size_token %}
+  {% set styles = styles|merge([
+    '--heading-mobile-font-size: var(--font-size-' ~ mobile_size_token ~ ')',
+    '--heading-mobile-line-height: var(--font-line-height-' ~ mobile_size_token ~ ')'
+  ]) %}
+{% endif %}
+{% if weight|default('') %}
+  {% set styles = styles|merge(['font-weight: ' ~ weight]) %}
+{% endif %}
+{% if styles %}
+  {% set heading_attributes = heading_attributes.setAttribute('style', styles|join('; ')) %}
+{% endif %}
+
+{% if (content is defined and content is not empty) or (text is defined and text is not empty) %}
+  <{{ resolved_variant }}{{ heading_attributes }}>
+    {% if content is defined and content is not empty %}
+      {{ content|raw }}
+    {% else %}
+      {{ text|raw }}
+    {% endif %}
+  </{{ resolved_variant }}>
+{% endif %}

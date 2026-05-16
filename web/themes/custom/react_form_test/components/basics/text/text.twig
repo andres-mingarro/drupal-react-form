@@ -1,0 +1,52 @@
+{#
+  SDC component: text
+  Usage: {{ include('react_form_test:text', { tag: 'p', class_name: 'highlight', text: 'Example text', size: 'lg', mobile_size: 'md' }, false) }}.
+#}
+
+{% set allowed_tags = ['span', 'label', 'p', 'div'] %}
+{% set requested_tag = tag|default('span') %}
+{% set resolved_tag = requested_tag in allowed_tags ? requested_tag : 'span' %}
+
+{% set size_value = size|default('md') %}
+{% set size_token = size_value|replace({'size-': ''}) %}
+{% set mobile_size_value = mobile_size|default('') %}
+{% set mobile_size_token = mobile_size_value|replace({'size-': ''}) %}
+{% set weight_value = weight|default('regular') %}
+{% set weight_token = weight_value %}
+
+{% set base_classes = ['text'] %}
+{% set extra = class_name|default(classname|default('')) %}
+{% set extra_list = extra is iterable and extra is not same as '' ? extra : extra|split(' ') %}
+{% set extra_list = extra_list is iterable ? extra_list : [] %}
+{% set classes = base_classes|merge(extra_list|filter(v => v is not empty)) %}
+
+{% set text_attributes = (attributes is defined ? attributes : create_attribute()).addClass(classes) %}
+{% set styles = [] %}
+{% if size_token %}
+  {% set styles = styles|merge([
+    '--text-font-size: var(--font-size-' ~ size_token ~ ')',
+    '--text-line-height: var(--font-line-height-' ~ size_token ~ ')'
+  ]) %}
+{% endif %}
+{% if mobile_size_token %}
+  {% set styles = styles|merge([
+    '--text-mobile-font-size: var(--font-size-' ~ mobile_size_token ~ ')',
+    '--text-mobile-line-height: var(--font-line-height-' ~ mobile_size_token ~ ')'
+  ]) %}
+{% endif %}
+{% if weight_token %}
+  {% set styles = styles|merge([
+    'font-weight: var(--font-weight-' ~ weight_token ~ ')'
+  ]) %}
+{% endif %}
+{% if styles %}
+  {% set text_attributes = text_attributes.setAttribute('style', styles|join('; ')) %}
+{% endif %}
+
+<{{ resolved_tag }}{{ text_attributes }}>
+  {% if content is defined %}
+    {{ content|raw }}
+  {% elseif text is defined %}
+    {{ text|raw }}
+  {% endif %}
+</{{ resolved_tag }}>

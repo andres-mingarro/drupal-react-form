@@ -1,0 +1,14 @@
+$schema: https://git.drupalcode.org/project/drupal/-/raw/HEAD/core/assets/schemas/v1/metadata.schema.json
+
+name: Site footer
+description: Site footer wrapper for the theme footer region.
+
+props:
+  type: object
+  additionalProperties: false
+  properties: {}
+
+slots:
+  content:
+    title: Content
+    description: Rendered footer region content.

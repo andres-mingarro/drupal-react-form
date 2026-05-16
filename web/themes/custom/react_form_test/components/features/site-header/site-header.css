@@ -1,0 +1,80 @@
+.site-header {
+  position: relative;
+  z-index: 100;
+  background-color: var(--Neutral-Light-Background);
+  -webkit-transition: ease-in-out 0.2s all;
+  -moz-transition: ease-in-out 0.2s all;
+  -ms-transition: ease-in-out 0.2s all;
+  -o-transition: ease-in-out 0.2s all;
+  transition: ease-in-out 0.2s all;
+}
+
+.site-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sm) var(--lg) var(--sm) var(--md);
+  gap: var(--sm);
+}
+@media screen and (width < 1024px) {
+  .site-header-inner {
+    padding: var(--xs) var(--xs) var(--xs) var(--sm);
+  }
+}
+.site-header-inner .left-col .site-header--branding img {
+  width: clamp(210px, 20vw, 299px);
+  min-width: 0;
+}
+.site-header-inner .right-col {
+  display: flex;
+  align-items: center;
+  gap: var(--md);
+  padding-right: 65px;
+  position: relative;
+}
+@media screen and (width < 1024px) {
+  .site-header-inner .right-col {
+    padding-right: 5px;
+  }
+}
+@media screen and (width < 1024px) {
+  .site-header-inner .right-col > .site-header--search {
+    display: none;
+  }
+}
+.site-header-inner .right-col:has(.site-header--search.is-expanded) .site-header--navigation {
+  opacity: 0;
+}
+.site-header-inner .right-col .site-header--navigation {
+  opacity: 1;
+  transition: opacity 0.4s cubic-bezier(0.46, 0.03, 0.12, 1.15);
+}
+.site-header-inner .right-col .site-header--navigation ul {
+  display: flex;
+}
+.site-header-inner .site-header--home-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+body.header-sticky .layout-wrapper .site-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow-md);
+  background-color: var(--Neutral-Light-Background);
+  -webkit-transition: ease-in-out 0.2s all;
+  -moz-transition: ease-in-out 0.2s all;
+  -ms-transition: ease-in-out 0.2s all;
+  -o-transition: ease-in-out 0.2s all;
+  transition: ease-in-out 0.2s all;
+}
+
+body.gin--horizontal-toolbar.header-sticky .layout-wrapper .site-header {
+  top: var(--drupal-displace-offset-top);
+}
+@media screen and (width < 1024px) {
+  body.gin--horizontal-toolbar.header-sticky .layout-wrapper .site-header {
+    top: var(--drupal-displace-offset-top);
+  }
+}

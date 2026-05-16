@@ -1,0 +1,46 @@
+$schema: https://git.drupalcode.org/project/drupal/-/raw/HEAD/core/assets/schemas/v1/metadata.schema.json
+
+name: Image
+description: Image container with configurable ratio.
+status: stable
+props:
+  type: object
+  additionalProperties: false
+  properties:
+    image:
+      type: object
+      title: Image data
+      properties:
+        url:
+          type: string
+          title: URL
+        src:
+          type: string
+          title: Alternate source URL
+        alt_text:
+          type: string
+          title: Alternative text
+        width:
+          type: integer
+          title: Width
+        height:
+          type: integer
+          title: Height
+        dummy:
+          type: boolean
+          title: Use placeholder image
+    height:
+      type: integer
+      title: Default height
+      default: 100
+    aspect_ratio:
+      type: string
+      title: Aspect ratio
+      default: '405/176'
+    class_name:
+      type: string
+      title: Additional classes
+slots:
+  fallback:
+    title: Fallback content
+    description: Displayed if no image is provided.

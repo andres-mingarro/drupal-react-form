@@ -1,0 +1,68 @@
+$schema: https://git.drupalcode.org/project/drupal/-/raw/HEAD/core/assets/schemas/v1/metadata.schema.json
+
+name: Heading
+description: Heading with h1-h6 variants and configurable styles.
+status: stable
+props:
+  type: object
+  additionalProperties: false
+  properties:
+    variant:
+      type: string
+      title: Heading level
+      enum:
+        - h1
+        - h2
+        - h3
+        - h4
+        - h5
+        - h6
+      default: h2
+    text:
+      type: string
+      title: Text
+    size:
+      type: string
+      title: Font size
+      description: Font size token, for example md, xl or 2xl.
+      enum:
+        - xs
+        - sm
+        - md
+        - lg
+        - xl
+        - 2xl
+        - 3xl
+        - 4xl
+        - 5xl
+        - 6xl
+        - 7xl
+        - 8xl
+    mobile_size:
+      type: string
+      title: Mobile font size
+      description: Mobile font size token, for example md, xl or 2xl.
+      enum:
+        - xs
+        - sm
+        - md
+        - lg
+        - xl
+        - 2xl
+        - 3xl
+        - 4xl
+        - 5xl
+        - 6xl
+        - 7xl
+        - 8xl
+    weight:
+      type: string
+      title: Font weight
+      description: CSS value for font-weight, for example bold or 400.
+    className:
+      type: string
+      title: Extra classes
+slots:
+  content:
+    title: Alternate content
+    description: Overrides text with rendered content.

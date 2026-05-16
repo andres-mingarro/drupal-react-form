@@ -1,0 +1,13 @@
+{# Componente SDC: site-header #}
+
+{% set header_attributes = (attributes is defined ? attributes : create_attribute()).addClass([
+  'site-header',
+]) %}
+
+<header{{ header_attributes }} role="banner">
+  <div class="region region-header site-header-inner">
+    {% if content is defined %}
+      {{ content }}
+    {% endif %}
+  </div>
+</header>

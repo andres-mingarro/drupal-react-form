@@ -1,0 +1,24 @@
+.link {
+  color: var(--Primary-Light-Foreground);
+  text-decoration: none;
+  -webkit-transition: ease-in-out 0.2s all;
+  -moz-transition: ease-in-out 0.2s all;
+  -ms-transition: ease-in-out 0.2s all;
+  -o-transition: ease-in-out 0.2s all;
+  transition: ease-in-out 0.2s all;
+}
+.link:hover, .link:focus-visible {
+  color: var(--Primary-Light-Highlight);
+  text-decoration: underline;
+  text-decoration-color: currentColor;
+}
+.link:visited {
+  color: var(--Primary-Light-Contrast);
+}
+.link:active {
+  color: var(--Primary-Light-Stroke);
+}
+.link:focus-visible {
+  outline: 2px solid var(--Primary-Light-Highlight);
+  outline-offset: 2px;
+}

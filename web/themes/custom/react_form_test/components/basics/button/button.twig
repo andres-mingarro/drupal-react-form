@@ -1,0 +1,32 @@
+{#
+  Componente SDC: button
+  Uso: {{ include('react_form_test:button', { label: 'Enviar', variant: 'primary', full: false }, false) }}
+#}
+
+{% set resolved_variant = variant|default('primary', true) %}
+
+{% set classes = [
+  'button',
+  'button--variant-' ~ (resolved_variant|clean_class),
+  'button--theme-' ~ (color|default('primary', true)|clean_class),
+  'button--size-' ~ (size|default('normal', true)),
+  full|default(false) ? 'is-full' : '',
+  extra_classes|default('', true)
+]|filter(v => v is not empty) %}
+
+{# Permitir pasar atributos externos (id, name, type, etc.). #}
+{% set button_attributes = (attributes is defined ? attributes : create_attribute()) %}
+{% set button_attributes = button_attributes.addClass(classes) %}
+
+{% set position = icon_position|default('left') %}
+{% set button_content %}
+  {% if icon is defined and icon and position == 'left' %}<span class="button--icon">{{ icon|raw }}</span>{% endif %}
+  <span class="button--label">{{ label }}</span>
+  {% if icon is defined and icon and position == 'right' %}<span class="button--icon">{{ icon|raw }}</span>{% endif %}
+{% endset %}
+
+{% if url|default('') %}
+  <a{{ button_attributes.setAttribute('href', url) }}>{{ button_content }}</a>
+{% else %}
+  <button{{ button_attributes }}>{{ button_content }}</button>
+{% endif %}

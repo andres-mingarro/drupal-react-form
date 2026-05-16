@@ -1,0 +1,70 @@
+@use '../../../sass/mixins';
+
+.heading {
+  margin: 0;
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--sm);
+  font-family: var(--font-family-title);
+
+  &.h1 {
+    font-size: var(--heading-font-size, var(--font-size-5xl));
+    line-height: var(--heading-line-height, var(--font-line-height-5xl));
+  }
+
+  &.h2 {
+    font-size: var(--heading-font-size, var(--font-size-2xl));
+    line-height: var(--heading-line-height, var(--font-line-height-2xl));
+  }
+
+  &.h3 {
+    font-size: var(--heading-font-size, var(--font-size-xl));
+    line-height: var(--heading-line-height, var(--font-line-height-xl));
+  }
+
+  &.h4 {
+    font-size: var(--heading-font-size, var(--font-size-md));
+    line-height: var(--heading-line-height, var(--font-line-height-md));
+  }
+
+  &.h5 {
+    font-size: var(--heading-font-size, var(--font-size-sm));
+    line-height: var(--heading-line-height, var(--font-line-height-sm));
+  }
+
+  &.h6 {
+    font-size: var(--heading-font-size, var(--font-size-xs));
+    line-height: var(--heading-line-height, var(--font-line-height-xs));
+  }
+
+  @include mixins.down-medium {
+    &.h1 {
+      font-size: var(--heading-mobile-font-size, var(--heading-font-size, var(--font-size-5xl)));
+      line-height: var(--heading-mobile-line-height, var(--heading-line-height, var(--font-line-height-5xl)));
+    }
+
+    &.h2 {
+      font-size: var(--heading-mobile-font-size, var(--heading-font-size, var(--font-size-2xl)));
+      line-height: var(--heading-mobile-line-height, var(--heading-line-height, var(--font-line-height-2xl)));
+    }
+
+    &.h3 {
+      font-size: var(--heading-mobile-font-size, var(--heading-font-size, var(--font-size-xl)));
+      line-height: var(--heading-mobile-line-height, var(--heading-line-height, var(--font-line-height-xl)));
+    }
+
+    &.h4 {
+      font-size: var(--heading-mobile-font-size, var(--heading-font-size, var(--font-size-md)));
+      line-height: var(--heading-mobile-line-height, var(--heading-line-height, var(--font-line-height-md)));
+    }
+
+    &.h5 {
+      font-size: var(--heading-mobile-font-size, var(--heading-font-size, var(--font-size-sm)));
+      line-height: var(--heading-mobile-line-height, var(--heading-line-height, var(--font-line-height-sm)));
+    }
+
+    &.h6 {
+      font-size: var(--heading-mobile-font-size, var(--heading-font-size, var(--font-size-xs)));
+      line-height: var(--heading-mobile-line-height, var(--heading-line-height, var(--font-line-height-xs)));
+    }
+  }
+}

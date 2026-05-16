@@ -1,0 +1,19 @@
+<div class="layout-container">
+  {% if page.header %}
+    {{ include('react_form_test:site-header', { content: page.header }, false) }}
+  {% endif %}
+
+  {% if page.highlighted %}
+    <div class="region region-highlighted">
+      {{ page.highlighted }}
+    </div>
+  {% endif %}
+
+  <main class="layout-main" role="main">
+    {{ page.content }}
+  </main>
+
+  {% if page.footer %}
+    {{ include('react_form_test:site-footer', { content: page.footer }, false) }}
+  {% endif %}
+</div>

@@ -1,0 +1,91 @@
+@use "../../../sass/mixins" as mixins;
+
+.site-header {
+  position: relative;
+  z-index: 100;
+  background-color: var(--Neutral-Light-Background);
+  @include mixins.transition(ease-in-out .2s all);
+
+}
+
+.site-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sm) var(--lg) var(--sm) var(--md);
+  gap: var(--sm);
+
+  @include mixins.down-large {
+    padding: var(--xs) var(--xs) var(--xs) var(--sm);
+  }
+
+  .left-col {
+    .site-header--branding {
+      img {
+        width: clamp(210px, 20vw, 299px);
+        min-width: 0;
+      }
+    }
+  }
+  .right-col {
+    display: flex;
+    align-items: center;
+    gap: var(--md);
+    padding-right: 65px;
+    position: relative;
+    @include mixins.down-large {
+      padding-right: 5px;
+    }
+
+    >.site-header--search {
+      @include mixins.down-large {
+        display: none
+      }
+  }
+
+    &:has(.site-header--search.is-expanded) {
+      .site-header--navigation {
+        opacity: 0;
+      }
+    }
+
+    .site-header--navigation {
+      opacity: 1;
+      transition: opacity 0.40s cubic-bezier(0.46, 0.03, 0.12, 1.15);
+      ul {
+        display: flex;
+      }
+    }
+  }
+
+  .site-header--home-link {
+    text-decoration: none;
+    color: inherit;
+  }
+
+}
+
+
+body.header-sticky {
+  .layout-wrapper {
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow-md);
+      background-color: var(--Neutral-Light-Background);
+      @include mixins.transition(ease-in-out .2s all);
+    }
+  }
+}
+
+body.gin--horizontal-toolbar.header-sticky {
+  .layout-wrapper {
+    .site-header {
+      top: var(--drupal-displace-offset-top);
+      @include mixins.down-large {
+        top: var(--drupal-displace-offset-top);
+      }
+    }
+  }
+}

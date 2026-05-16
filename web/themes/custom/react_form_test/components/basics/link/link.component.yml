@@ -1,0 +1,34 @@
+$schema: https://git.drupalcode.org/project/drupal/-/raw/HEAD/core/assets/schemas/v1/metadata.schema.json
+
+name: Link
+description: Accessible link with new tab option and supplemental screen reader text.
+status: stable
+props:
+  type: object
+  additionalProperties: false
+  required:
+    - href
+  properties:
+    href:
+      type: string
+      title: URL
+    class_name:
+      type: string
+      title: Additional classes
+    assistive_hidden:
+      type: boolean
+      title: Hide from accessibility tree (aria-hidden, tabindex=-1)
+      default: false
+    open_in_new_tab:
+      type: boolean
+      title: Open in new tab
+    supplemental_text:
+      type: string
+      title: Additional screen reader text
+    text:
+      type: string
+      title: Visible text (alternative to content)
+slots:
+  content:
+    title: Content
+    description: Link content (text or markup).

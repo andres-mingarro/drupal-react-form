@@ -1,0 +1,42 @@
+$schema: https://git.drupalcode.org/project/drupal/-/raw/HEAD/core/assets/schemas/v1/metadata.schema.json
+
+name: Grid template
+description: Responsive container based on CSS Grid with configurable columns.
+status: stable
+props:
+  type: object
+  additionalProperties: false
+  properties:
+    cols_default:
+      type: integer
+      title: Default columns
+      default: 1
+    cols_medium:
+      type: integer
+      title: Tablet columns
+      default: 2
+    cols_desktop:
+      type: integer
+      title: Desktop columns
+      default: 4
+    direction:
+      type: string
+      title: Direction
+      enum:
+        - horizontal
+        - vertical
+      default: horizontal
+    small_gap:
+      type: boolean
+      title: Reduced gap
+      default: false
+    class_name:
+      type: string
+      title: Additional classes
+    class_name_inner:
+      type: string
+      title: Additional classes for inner grid element
+slots:
+  content:
+    title: Content
+    description: Elements distributed within the grid.

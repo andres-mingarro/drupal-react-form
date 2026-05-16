@@ -1,0 +1,37 @@
+.drupal-messages {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sm);
+}
+
+.drupal-messages__item {
+  border: 1px solid var(--Neutral-Light-Stroke);
+  border-radius: var(--radius-x2);
+  padding: var(--sm);
+  color: var(--Neutral-Light-Highlight);
+}
+
+.drupal-messages__item--status {
+  background-color: var(--Primary-Light-Background);
+  border-color: var(--Primary-Light-Stroke);
+}
+
+.drupal-messages__item--warning {
+  background-color: #fff8e5;
+  border-color: #e7b649;
+}
+
+.drupal-messages__item--error {
+  background-color: var(--Error-Light-Background);
+  border-color: var(--Error-Light-Stroke);
+  color: var(--Error-Light-Foreground);
+}
+
+.drupal-messages__list {
+  margin: 0;
+  padding-left: var(--x5);
+}
+
+.drupal-messages__list-item + .drupal-messages__list-item {
+  margin-top: var(--x2);
+}

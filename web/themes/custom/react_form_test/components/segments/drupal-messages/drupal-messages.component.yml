@@ -1,0 +1,17 @@
+$schema: https://git.drupalcode.org/project/drupal/-/raw/HEAD/core/assets/schemas/v1/metadata.schema.json
+
+name: Drupal messages
+description: Wrapper component for Drupal status, warning and error messages.
+
+props:
+  type: object
+  additionalProperties: false
+  properties:
+    message_list:
+      type: object
+      title: Grouped messages by type
+    status_headings:
+      type: object
+      title: Headings for each message type
+
+slots: {}

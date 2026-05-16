@@ -1,0 +1,73 @@
+$schema: https://git.drupalcode.org/project/drupal/-/raw/HEAD/core/assets/schemas/v1/metadata.schema.json
+
+name: Text
+status: stable
+description: Text component with selectable tags.
+props:
+  type: object
+  additionalProperties: false
+  properties:
+    tag:
+      type: string
+      title: HTML tag
+      enum:
+        - span
+        - label
+        - p
+        - div
+      default: span
+    class_name:
+      type: string
+      title: Additional classes
+    classname:
+      type: string
+      title: Additional classes
+    text:
+      type: string
+      title: Plain text
+    size:
+      type: string
+      title: Type size
+      enum:
+        - xs
+        - sm
+        - md
+        - lg
+        - xl
+        - 2xl
+        - 3xl
+        - 4xl
+        - 5xl
+        - 6xl
+        - 7xl
+        - 8xl
+      default: md
+    mobile_size:
+      type: string
+      title: Mobile type size
+      enum:
+        - xs
+        - sm
+        - md
+        - lg
+        - xl
+        - 2xl
+        - 3xl
+        - 4xl
+        - 5xl
+        - 6xl
+        - 7xl
+        - 8xl
+    weight:
+      type: string
+      title: Font weight
+      enum:
+        - light
+        - regular
+        - medium
+        - bold
+      default: regular
+slots:
+  content:
+    title: Content
+    description: HTML content to render inside the element.

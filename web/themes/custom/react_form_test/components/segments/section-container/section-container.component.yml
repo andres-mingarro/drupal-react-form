@@ -1,0 +1,40 @@
+$schema: https://git.drupalcode.org/project/drupal/-/raw/HEAD/core/assets/schemas/v1/metadata.schema.json
+
+name: Section container
+description: Section container with configurable width and optional inner spacing.
+status: stable
+props:
+  type: object
+  additionalProperties: false
+  properties:
+    container:
+      type: string
+      title: Container size
+      enum:
+        - small
+        - large
+        - full
+      default: large
+    gap:
+      type: boolean
+      title: Add inner gap
+      default: true
+    mobile_gap:
+      enum:
+        - small
+        - large
+        - none
+      type: string
+      title: Mobile inner gap size
+      default: small
+    tag:
+      type: string
+      title: HTML tag
+      default: section
+    class_name:
+      type: string
+      title: Additional classes
+slots:
+  content:
+    title: Content
+    description: Elements rendered inside the section.

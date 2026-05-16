@@ -1,0 +1,37 @@
+$schema: https://git.drupalcode.org/project/drupal/-/raw/HEAD/core/assets/schemas/v1/metadata.schema.json
+
+name: Divider
+status: draft
+description: Simple divider line with orientation, length, and color options.
+props:
+  type: object
+  additionalProperties: false
+  properties:
+    orientation:
+      type: string
+      title: Orientation
+      enum:
+        - horizontal
+        - vertical
+      default: horizontal
+    line_length:
+      type: string
+      title: Line length
+      description: CSS length value for width/height depending on orientation.
+      default: 100%
+    color:
+      type: string
+      title: Color token
+      description: CSS variable token name without the leading --.
+      default: color-gray-60
+    hidden_desktop:
+      type: boolean
+      title: Hide on desktop
+      default: false
+    hidden_mobile:
+      type: boolean
+      title: Hide on mobile
+      default: false
+    class_name:
+      type: string
+      title: Additional classes

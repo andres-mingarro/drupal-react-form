@@ -1,0 +1,14 @@
+{
+  "name": "react-form-test-theme",
+  "private": true,
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "sass": "^1.80.0"
+  },
+  "scripts": {
+    "build:sass": "sass sass/global.scss:css/global.css --no-source-map",
+    "watch:sass": "sass --watch --poll sass/global.scss:css/global.css --no-source-map"
+  }
+}

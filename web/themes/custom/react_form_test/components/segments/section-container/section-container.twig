@@ -1,0 +1,45 @@
+{#
+  Componente SDC: section-container
+  Para usarlo:
+  {{ include('react_form_test:section-container', {
+    container: 'large', # opciones: small | large | full
+    gap: true,
+    mobile_gap: 'small', # opciones: small | large | none
+    content: '<p>Contenido dentro de la sección</p>'
+  }, false) }}
+#}
+
+{% set resolved_tag = tag|default('section') %}
+{% set resolved_container = container in ['small', 'large', 'full'] ? container : 'large' %}
+{% set resolved_gap = gap is defined ? gap : true %}
+{% set mobile_gap_prop = mobile_gap is defined ? mobile_gap : attribute(_context, 'mobile-gap')|default('') %}
+{% set resolved_mobile_gap = mobile_gap_prop in ['small', 'large', 'none'] ? mobile_gap_prop : 'small' %}
+
+{% set base_classes = [
+  'section-container',
+  resolved_container == 'small' ? 'small-container' : (resolved_container == 'full' ? 'full-width-container' : 'large-container'),
+  resolved_gap ? 'has-gap' : 'no-gap'
+] %}
+
+{% set inner_classes = [
+  resolved_gap ? 'has-gap' : 'no-gap'
+] %}
+{% if resolved_gap and resolved_mobile_gap in ['large', 'none'] %}
+  {% set inner_classes = inner_classes|merge(['mobile-gap-' ~ resolved_mobile_gap]) %}
+{% endif %}
+{% set inner_class_string = inner_classes|join(' ') %}
+
+{% set extra = class_name|default('') %}
+{% set extra_list = extra is iterable and extra is not same as '' ? extra : extra|split(' ') %}
+{% set extra_list = extra_list is iterable ? extra_list : [] %}
+{% set classes = base_classes|merge(extra_list|filter(v => v is not empty)) %}
+
+{% set wrapper_attributes = (attributes is defined ? attributes : create_attribute()).addClass(classes) %}
+
+<{{ resolved_tag }}{{ wrapper_attributes }}>
+  <div class="section-container--inner {{ inner_class_string }}">
+  {% if content is defined %}
+    {{ content|raw }}
+  {% endif %}
+  </div>
+</{{ resolved_tag }}>

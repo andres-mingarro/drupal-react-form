@@ -1,0 +1,44 @@
+{#
+  Componente SDC: link
+  Uso:
+  {{ include('react_form_test:link', {
+    href: 'https://example.com',
+    open_in_new_tab: true,
+    supplemental_text: 'Opens example in a new tab',
+    content: 'Texto del enlace'
+  }, false) }}
+#}
+
+{% set href_value = href|default('') %}
+
+{% set base_classes = ['link'] %}
+{% set extra = class_name|default('') %}
+{% set extra_list = extra is iterable and extra is not same as '' ? extra : extra|split(' ') %}
+{% set extra_list = extra_list is iterable ? extra_list : [] %}
+{% set classes = base_classes|merge(extra_list|filter(v => v is not empty)) %}
+
+{% set opens_in_new_tab = ((href_value starts with 'http') and open_in_new_tab|default(true) is not same as false) or open_in_new_tab|default(false) %}
+
+{% set visually_hidden_text = supplemental_text|default('') %}
+{% if visually_hidden_text is empty and opens_in_new_tab %}
+  {% set visually_hidden_text = 'Opens in new window' %}
+{% endif %}
+
+{% set link_attributes = (attributes is defined ? attributes : create_attribute()).addClass(classes) %}
+{% if assistive_hidden|default(false) %}
+  {% set link_attributes = link_attributes.setAttribute('aria-hidden', 'true').setAttribute('tabindex', '-1') %}
+{% endif %}
+{% if opens_in_new_tab %}
+  {% set link_attributes = link_attributes.setAttribute('rel', 'noreferrer').setAttribute('target', '_blank') %}
+{% endif %}
+
+<a{{ link_attributes.setAttribute('href', href_value) }}>
+  {% if content is defined %}
+    {{ content|raw }}
+  {% elseif text is defined %}
+    {{ text }}
+  {% endif %}
+  {% if visually_hidden_text %}
+    <span class="visually-hidden">{{ visually_hidden_text }}</span>
+  {% endif %}
+</a>

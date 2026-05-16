@@ -1,0 +1,34 @@
+{# Componente SDC: drupal-messages #}
+<div data-drupal-messages class="drupal-messages">
+  {% for type, messages in message_list|default({}) %}
+    {% set message_type = type|clean_class %}
+    {% set heading = status_headings[type]|default(type|capitalize) %}
+    <div
+      class="drupal-messages__item drupal-messages__item--{{ message_type }}"
+      role="contentinfo"
+      aria-label="{{ heading }}"
+    >
+      {% if type == 'error' %}
+        <div role="alert">
+      {% endif %}
+
+      {% if heading %}
+        <h2 class="visually-hidden">{{ heading }}</h2>
+      {% endif %}
+
+      {% if messages|length > 1 %}
+        <ul class="drupal-messages__list">
+          {% for message in messages %}
+            <li class="drupal-messages__list-item">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="drupal-messages__text">{{ messages|first }}</div>
+      {% endif %}
+
+      {% if type == 'error' %}
+        </div>
+      {% endif %}
+    </div>
+  {% endfor %}
+</div>

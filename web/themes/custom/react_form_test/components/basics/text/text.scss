@@ -1,0 +1,38 @@
+@use '../../../sass/mixins';
+
+.text {
+  font: inherit;
+  color: inherit;
+  font-size: var(--text-font-size, inherit);
+  line-height: var(--text-line-height, inherit);
+
+  &.size-xs { font-size: var(--font-size-xs); line-height: var(--font-line-height-xs); }
+  &.size-sm { font-size: var(--font-size-sm); line-height: var(--font-line-height-sm); }
+  &.size-md { font-size: var(--font-size-md); line-height: var(--font-line-height-md); }
+  &.size-lg { font-size: var(--font-size-lg); line-height: var(--font-line-height-lg); }
+  &.size-xl { font-size: var(--font-size-xl); line-height: var(--font-line-height-xl); }
+  &.size-2xl { font-size: var(--font-size-2xl); line-height: var(--font-line-height-2xl); }
+  &.size-3xl { font-size: var(--font-size-3xl); line-height: var(--font-line-height-3xl); }
+  &.size-4xl { font-size: var(--font-size-4xl); line-height: var(--font-line-height-4xl); }
+  &.size-5xl { font-size: var(--font-size-5xl); line-height: var(--font-line-height-5xl); }
+  &.size-6xl { font-size: var(--font-size-6xl); line-height: var(--font-line-height-6xl); }
+  &.size-7xl { font-size: var(--font-size-7xl); line-height: var(--font-line-height-7xl); }
+  &.size-8xl { font-size: var(--font-size-8xl); line-height: var(--font-line-height-8xl); }
+
+  .weight-light { font-weight: var(--font-weight-light); }
+  .weight-regular { font-weight: var(--font-weight-regular); }
+  .weight-medium { font-weight: var(--font-weight-medium); }
+  .weight-bold { font-weight: var(--font-weight-bold); }
+
+  @include mixins.down-medium {
+    font-size: var(--text-mobile-font-size, var(--text-font-size, inherit));
+    line-height: var(--text-mobile-line-height, var(--text-line-height, inherit));
+  }
+}
+
+p.text {
+  font-family: var( --font-family-body);
+  font-weight: 300;
+  margin-top: 0;
+  margin-bottom: var(--sm);
+}

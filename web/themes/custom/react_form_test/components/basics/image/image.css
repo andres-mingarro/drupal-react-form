@@ -1,0 +1,10 @@
+.image {
+  display: block;
+}
+.image img {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  aspect-ratio: var(--image-aspect-ratio);
+  display: flex;
+}

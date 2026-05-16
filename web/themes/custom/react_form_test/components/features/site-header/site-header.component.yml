@@ -1,0 +1,14 @@
+$schema: https://git.drupalcode.org/project/drupal/-/raw/HEAD/core/assets/schemas/v1/metadata.schema.json
+
+name: Site header
+description: Site header wrapper for the theme header region.
+
+props:
+  type: object
+  additionalProperties: false
+  properties: {}
+
+slots:
+  content:
+    title: Content
+    description: Rendered header region content.

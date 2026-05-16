@@ -1,0 +1,60 @@
+$schema: https://git.drupalcode.org/project/drupal/-/raw/HEAD/core/assets/schemas/v1/metadata.schema.json
+
+name: Button
+description: Theme's base button.
+status: stable
+props:
+  type: object
+  additionalProperties: false
+  required:
+    - label
+  properties:
+    label:
+      type: string
+      title: Label
+    url:
+      type: string
+      title: URL
+    variant:
+      type: string
+      title: Variant
+      enum:
+        - primary
+        - line
+        - line-bg
+        - link
+      default: primary
+    color:
+      type: string
+      title: Color
+      enum:
+        - primary
+        - secondary
+        - contrast
+        - light
+      default: primary
+    full:
+      type: boolean
+      title: Full width
+      default: false
+    size:
+      type: string
+      title: Size
+      enum:
+        - normal
+        - small
+      default: normal
+    icon_position:
+      type: string
+      title: Icon position
+      enum:
+        - left
+        - right
+      default: left
+    extra_classes:
+      type: string
+      title: Extra classes
+slots:
+  icon:
+    title: Icon
+    description: SVG or HTML icon rendered beside the label.

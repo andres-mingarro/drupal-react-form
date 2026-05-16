@@ -1,0 +1,14 @@
+name: 'React Form Test'
+type: theme
+description: 'Minimal Drupal theme for testing the drupal_react_form module.'
+core_version_requirement: '^10.1 || ^11'
+base theme: stable9
+
+libraries:
+  - react_form_test/global
+
+regions:
+  header: 'Header'
+  highlighted: 'Highlighted'
+  content: 'Content'
+  footer: 'Footer'

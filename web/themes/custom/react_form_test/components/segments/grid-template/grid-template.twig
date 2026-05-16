@@ -1,0 +1,51 @@
+{#
+  Componente SDC: grid-template
+  Para usarlo:
+  {{ include('react_form_test:grid-template', {
+    cols_default: 2,
+    cols_medium: 3,
+    cols_desktop: 4,
+    small_gap: true,
+    direction: 'horizontal', # horizontal | vertical
+    content: some_markup
+  }, false) }}
+#}
+
+{% set cols_default_resolved = cols_default|default(1) %}
+{% set cols_medium_resolved = cols_medium|default(2) %}
+{% set cols_desktop_resolved = cols_desktop|default(4) %}
+
+{% set allowed_directions = ['horizontal', 'vertical'] %}
+{% set grid_direction = direction in allowed_directions ? direction : 'horizontal' %}
+
+{% set base_classes = [
+  'grid-template',
+  grid_direction,
+  small_gap ? 'small-gap' : 'gap'
+] %}
+
+{% set extra = class_name|default('') %}
+{% set extra_list = extra is iterable and extra is not same as '' ? extra : extra|split(' ') %}
+{% set extra_list = extra_list is iterable ? extra_list : [] %}
+{% set wrapper_classes = ['grid-template']|merge(extra_list|filter(v => v is not empty)) %}
+{% set wrapper_classes_string = wrapper_classes|join(' ') %}
+{% set inner_extra = class_name_inner|default('') %}
+{% set inner_extra_list = inner_extra is iterable and inner_extra is not same as '' ? inner_extra : inner_extra|split(' ') %}
+{% set inner_classes = ['grid-template--inner', grid_direction, small_gap ? 'small-gap' : 'gap']|merge(inner_extra_list|filter(v => v is not empty)) %}
+{% set inner_classes_string = inner_classes|join(' ') %}
+
+{% set style_list = [
+  '--grid-template--colsDefault: ' ~ cols_default_resolved,
+  '--grid-template--colsMedium: ' ~ cols_medium_resolved,
+  '--grid-template--colsDesktop: ' ~ cols_desktop_resolved
+] %}
+
+{% set grid_attributes = (attributes is defined ? attributes : create_attribute()).setAttribute('style', style_list|join('; ')) %}
+
+<div{% if wrapper_classes_string %} class="{{ wrapper_classes_string }}"{% endif %}>
+  <div class="{{ inner_classes_string }}" {{ grid_attributes }}>
+    {% if content is defined %}
+      {{ content|raw }}
+    {% endif %}
+  </div>
+</div>

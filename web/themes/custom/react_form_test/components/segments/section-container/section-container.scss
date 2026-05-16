@@ -1,0 +1,48 @@
+@use '../../../sass/mixins' as mixins;
+$small-gap: var(--sm);
+
+.section-container {
+  width: 100%;
+  margin: 0 auto;
+  margin-bottom: var(--xl);
+
+  &.large-container {
+    max-width: var(--large-width);
+  }
+
+  &.small-container {
+    max-width: calc(var(--small-width) + $small-gap);
+  }
+
+  &.full-width-container {
+    max-width: none;
+  }
+
+  .section-container--inner {
+    &.has-gap {
+      padding: 0 $small-gap;
+    }
+
+    &.has-gap.mobile-gap-large,
+    &.mobile-gap-large {
+      @include mixins.down-small {
+        padding: 0 var(--lg);
+      }
+    }
+
+    &.has-gap.mobile-gap-none,
+    &.mobile-gap-none {
+      @include mixins.down-small {
+        padding: 0;
+      }
+    }
+
+    &.no-gap {
+      padding: 0;
+    }
+  }
+}
+
+.section-container .section-container {
+  margin-bottom: 0;
+}

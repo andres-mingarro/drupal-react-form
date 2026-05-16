@@ -1,0 +1,38 @@
+{#
+  Componente SDC: image
+  
+  {{ include('react_form_test:image', {
+  image: {
+    src: file_url,
+    alt_text: 'Descripción'
+  },
+  aspect_ratio: '4/3'
+}, false) }}
+#}
+
+{% set image_data = image|default({}) %}
+{% set use_dummy = image_data.dummy|default(false) %}
+{% set src = not use_dummy ? image_data.url|default(image_data.src|default(null)) : null %}
+{% set alt = image_data.alt_text|default('') %}
+{% set width = image_data.width|default(null) %}
+{% set height_value = image_data.height|default(height|default(100)) %}
+{% set aspect_ratio_value = aspect_ratio|default('405/176') %}
+{% set fallback_src = (base_path|default('/')) ~ active_theme_path() ~ '/components/basics/image/assets/dummy.png' %}
+{% set resolved_src = (use_dummy ? null : src)|default(fallback_src) %}
+
+{% set base_classes = ['image'] %}
+{% set extra = class_name|default('') %}
+{% set extra_list = extra is iterable and extra is not same as '' ? extra : extra|split(' ') %}
+{% set extra_list = extra_list is iterable ? extra_list : [] %}
+{% set classes = base_classes|merge(extra_list|filter(v => v is not empty)) %}
+
+{% set style_value = '--image-aspect-ratio: ' ~ aspect_ratio_value %}
+{% set wrapper_attributes = (attributes is defined ? attributes : create_attribute()).addClass(classes).setAttribute('style', style_value).setAttribute('data-aos', 'fade').setAttribute('data-aos-duration', '900') %}
+
+<div{{ wrapper_attributes }}>
+  {% if (src is empty or use_dummy) and fallback is defined %}
+    {{ fallback }}
+  {% else %}
+    <img src="{{ resolved_src }}" alt="{{ alt }}"{% if width %} width="{{ width }}"{% endif %}{% if height_value %} height="{{ height_value }}"{% endif %} loading="lazy" />
+  {% endif %}
+</div>

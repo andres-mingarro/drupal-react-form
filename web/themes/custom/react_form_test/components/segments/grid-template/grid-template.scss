@@ -1,0 +1,39 @@
+@use '../../../sass/mixins' as mixins;
+
+.grid-template {
+  
+  .grid-template--inner {
+    margin-bottom: var(--xl);
+    container: card / inline-size;
+
+    &.horizontal {
+      display: grid;
+      width: 100%;
+      @include mixins.transition(ease-in-out .2s all);
+      grid-template-columns: repeat(var( --grid-template--colsDesktop, var(--grid-template--colsMedium, var(--grid-template--colsDefault, 1)) ), 1fr );
+  
+      @include mixins.down-medium {
+        grid-template-columns: repeat(var(--grid-template--colsDefault, 1), 1fr);
+      }
+  
+      @include mixins.down-small {
+        grid-template-columns: repeat(var(--grid-template--colsDefault, 1), 1fr);
+      }
+    }
+
+    &.vertical {
+      display: flex;
+      flex-direction: column;
+    }
+
+    &.gap {
+      gap: var(--3xl);
+      @include mixins.down-large {
+        gap: var(--sm);
+      }
+    }
+
+    &.small-gap {
+    }
+  }
+}

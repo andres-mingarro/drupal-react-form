@@ -1,0 +1,36 @@
+.grid-template .grid-template--inner {
+  margin-bottom: var(--xl);
+  container: card/inline-size;
+}
+.grid-template .grid-template--inner.horizontal {
+  display: grid;
+  width: 100%;
+  -webkit-transition: ease-in-out 0.2s all;
+  -moz-transition: ease-in-out 0.2s all;
+  -ms-transition: ease-in-out 0.2s all;
+  -o-transition: ease-in-out 0.2s all;
+  transition: ease-in-out 0.2s all;
+  grid-template-columns: repeat(var(--grid-template--colsDesktop, var(--grid-template--colsMedium, var(--grid-template--colsDefault, 1))), 1fr);
+}
+@media screen and (width < 768px) {
+  .grid-template .grid-template--inner.horizontal {
+    grid-template-columns: repeat(var(--grid-template--colsDefault, 1), 1fr);
+  }
+}
+@media screen and (width < 640px) {
+  .grid-template .grid-template--inner.horizontal {
+    grid-template-columns: repeat(var(--grid-template--colsDefault, 1), 1fr);
+  }
+}
+.grid-template .grid-template--inner.vertical {
+  display: flex;
+  flex-direction: column;
+}
+.grid-template .grid-template--inner.gap {
+  gap: var(--3xl);
+}
+@media screen and (width < 1024px) {
+  .grid-template .grid-template--inner.gap {
+    gap: var(--sm);
+  }
+}

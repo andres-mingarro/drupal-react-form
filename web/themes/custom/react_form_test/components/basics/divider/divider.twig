@@ -1,0 +1,30 @@
+{#
+  Componente SDC: divider
+  Uso: {{ include('react_form_test:divider', { orientation: 'horizontal', line_length: '100%', color: 'color-gray-60' }, false) }}
+#}
+
+{% set orientation_value = orientation|default('horizontal') %}
+{% set resolved_orientation = orientation_value == 'vertical' ? 'vertical' : 'horizontal' %}
+{% set resolved_line_length = line_length|default('100%') %}
+{% set resolved_color = color|default('color-gray-60') %}
+
+{% set base_classes = [
+  'divider',
+  'divider--' ~ resolved_orientation,
+  hidden_desktop|default(false) ? 'divider-hidden-desktop' : '',
+  hidden_mobile|default(false) ? 'divider-hidden-mobile' : ''
+]|filter(v => v is not empty) %}
+
+{% set extra = class_name|default('') %}
+{% set extra_list = extra is iterable and extra is not same as '' ? extra : extra|split(' ') %}
+{% set extra_list = extra_list is iterable ? extra_list : [] %}
+{% set classes = base_classes|merge(extra_list|filter(v => v is not empty)) %}
+
+{% set divider_attributes = (attributes is defined ? attributes : create_attribute()).addClass(classes) %}
+{% set styles = [
+  '--line-length: ' ~ resolved_line_length,
+  '--line-color: var(--' ~ resolved_color ~ ')'
+] %}
+{% set divider_attributes = divider_attributes.setAttribute('style', styles|join('; ')) %}
+
+<hr{{ divider_attributes }} aria-hidden="true" />

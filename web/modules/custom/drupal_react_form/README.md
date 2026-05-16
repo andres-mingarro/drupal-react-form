@@ -1,6 +1,6 @@
 # Drupal React Form — Documentación del componente
 
-Sistema que expone formularios como JSON y los renderiza con React, permitiendo control total sobre el markup desde el tema.
+Sistema que expone formularios como JSON y los renderiza con React, permitiendo control total sobre el markup desde el theme.
 
 ---
 
@@ -8,7 +8,7 @@ Sistema que expone formularios como JSON y los renderiza con React, permitiendo 
 
 1. [Flujo de datos](#flujo-de-datos)
 2. [Montar el componente en cualquier template](#montar-el-componente-en-cualquier-template)
-3. [SDC: llevar el form a un componente del tema](#sdc-llevar-el-form-a-un-componente-del-tema)
+3. [SDC: llevar el form a un componente del theme](#sdc-llevar-el-form-a-un-componente-del-theme)
 4. [Crear un componente React con markup custom](#crear-un-componente-react-con-markup-custom)
 5. [Registrar el componente en el registry](#registrar-el-componente-en-el-registry)
 6. [Todos los field components](#todos-los-field-components)
@@ -115,14 +115,14 @@ El bundle escanea todos los `[data-react-form]` de la página y monta el compone
 
 ---
 
-## SDC: llevar el form a un componente del tema
+## SDC: llevar el form a un componente del theme
 
-Cada formulario puede vivir como un componente SDC en `components/features/` del tema. Esto permite incluirlo en cualquier template con una línea y pasarle datos de Drupal como props.
+Cada formulario puede vivir como un componente SDC en `components/features/` del theme. Esto permite incluirlo en cualquier template con una línea y pasarle datos de Drupal como props.
 
 ### Estructura mínima
 
 ```
-web/themes/custom/[tema]/components/features/[nombre-form]/
+web/themes/custom/[theme]/components/features/[nombre-form]/
   [nombre-form].component.yml
   [nombre-form].twig
   [nombre-form].css
@@ -184,7 +184,7 @@ props:
 }
 ```
 
-### Incluirlo en cualquier template del tema
+### Incluirlo en cualquier template del theme
 
 ```twig
 {# page.html.twig, node.html.twig, etc. #}
@@ -198,8 +198,8 @@ props:
 Si necesitás pasar datos del usuario u otra entidad, usá un preprocess hook en el `.theme`:
 
 ```php
-// [tema].theme
-function [tema]_preprocess_page(&$variables): void {
+// [theme].theme
+function [theme]_preprocess_page(&$variables): void {
   $uid = (int) \Drupal::currentUser()->id();
   if ($uid) {
     $user = \Drupal\user\Entity\User::load($uid);
